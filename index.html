@@ -4,668 +4,379 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cargando Sistema... | ES2942</title>
-  <!-- Firebase App (compat) y Database -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDK para Sincronización en Tiempo Real -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
   <style>
     :root {
-      --bg-main: #070b12;
-      --bg-nav: #0b111e;
-      --bg-card: #0e1626;
-      --bg-card-hover: #141f35;
-      --border-color: #1e293b;
-      --border-glow: rgba(0, 243, 255, 0.25);
-      --text-main: #f8fafc;
-      --text-muted: #64748b;
-      --cyan-main: #00f3ff;
-      --cyan-glow: rgba(0, 243, 255, 0.4);
+      --bg-dark: #050811;
+      --card-bg: rgba(11, 18, 32, 0.85);
+      --card-border: rgba(56, 189, 248, 0.15);
       --green-main: #10b981;
-      --green-glow: rgba(16, 185, 129, 0.4);
-      --red-main: #f43f5e;
-      --red-glow: rgba(244, 63, 94, 0.4);
+      --green-glow: rgba(16, 185, 129, 0.5);
+      --green-bg: rgba(16, 185, 129, 0.05);
+      --red-main: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.5);
+      --red-bg: rgba(239, 68, 68, 0.05);
       --hazard-main: #f59e0b;
-      --hazard-glow: rgba(245, 158, 11, 0.4);
+      --hazard-glow: rgba(245, 158, 11, 0.5);
+      --hazard-bg: rgba(245, 158, 11, 0.08);
+      --cyan-hud: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
     body {
-      background-color: var(--bg-main);
-      background-image: radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.04) 0%, transparent 60%);
-      color: var(--text-main);
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px 20px 36px 20px;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.08) 0%, transparent 65%),
+        linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
     }
 
-    /* Barra de Navegación Superior */
-    nav.top-nav {
-      background-color: var(--bg-nav);
-      border-bottom: 1px solid var(--border-color);
+    .container { width: 100%; max-width: 1050px; display: flex; flex-direction: column; gap: 20px; }
+
+    .header-tactical {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(7, 12, 24, 0.98) 100%);
+      border: 1px solid var(--card-border);
+      border-top: 3px solid var(--cyan-hud);
+      border-radius: 12px;
+      padding: 16px 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 24px;
-      flex-wrap: wrap;
       gap: 15px;
     }
 
-    .nav-brand {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .nav-logo {
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: var(--cyan-main);
-      letter-spacing: 1px;
-      text-shadow: 0 0 10px var(--cyan-glow);
-    }
-    .nav-sub {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      letter-spacing: 0.5px;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .nav-btn {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border-color);
-      color: var(--text-muted);
-      padding: 7px 14px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-decoration: none;
-      display: flex;
+    .header-left { display: flex; flex-direction: column; gap: 4px; }
+    .sys-badge {
+      display: inline-flex;
       align-items: center;
       gap: 6px;
-    }
-    .nav-btn:hover {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-main);
-      border-color: var(--text-muted);
-    }
-    .nav-btn.active {
-      background: #2563eb;
-      border-color: #3b82f6;
-      color: #fff;
-      box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
-    }
-
-    .lang-selector {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 7px 12px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* Contenedor Principal */
-    .main-container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      flex: 1;
-    }
-
-    /* Cabecera de Sección */
-    .section-header {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 5px;
-    }
-    .section-title {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--text-main);
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .section-title span { color: var(--green-main); text-shadow: 0 0 15px var(--green-glow); }
-    .section-subtitle {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      letter-spacing: 0.5px;
-    }
-
-    /* Tarjeta Principal de Monitorización */
-    .monitor-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 24px;
-      display: grid;
-      grid-template-columns: 1fr 1.3fr;
-      gap: 24px;
-      align-items: center;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-      position: relative;
-      overflow: hidden;
-    }
-    @media(max-width: 900px) {
-      .monitor-card { grid-template-columns: 1fr; }
-    }
-
-    /* Columna Izquierda: Fase Actual */
-    .phase-column {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    .phase-badge-box {
-      padding: 16px 20px;
-      border-radius: 8px;
-      font-weight: 800;
-      font-size: 1.05rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      position: relative;
-      overflow: hidden;
-    }
-    .phase-badge-box.prep {
-      background: linear-gradient(135deg, rgba(244, 63, 94, 0.18), rgba(244, 63, 94, 0.05));
-      border: 1px solid rgba(244, 63, 94, 0.5);
-      color: var(--red-main);
-      box-shadow: 0 0 20px rgba(244, 63, 94, 0.15);
-    }
-    .phase-badge-box.active {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.05));
-      border: 1px solid rgba(16, 185, 129, 0.5);
-      color: var(--green-main);
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
-    }
-    .phase-badge-box.hazard {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.05));
-      border: 1px solid rgba(245, 158, 11, 0.5);
-      color: var(--hazard-main);
-      box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
-    }
-    .phase-subtext {
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--text-main);
-      opacity: 0.85;
-      letter-spacing: 0.3px;
-    }
-    
-    .next-phase-info {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    /* Columna Derecha: Reloj Grande */
-    .clock-column {
-      background: rgba(2, 6, 23, 0.6);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      position: relative;
-    }
-    .clock-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.72rem;
-      text-transform: uppercase;
+      color: var(--cyan-hud);
       letter-spacing: 1.5px;
-      color: var(--text-muted);
       font-weight: 700;
     }
-    .timer-digits {
-      font-size: 3.2rem;
-      font-weight: 800;
-      font-family: 'Courier New', Courier, monospace;
-      letter-spacing: 3px;
-      color: var(--red-main);
-      text-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
+    .pulse-dot {
+      width: 6px; height: 6px;
+      background-color: var(--cyan-hud);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--cyan-hud);
+      animation: pulse-glow 1.5s infinite;
+    }
+
+    .tactical-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+      text-transform: uppercase;
       line-height: 1.1;
     }
-    .clock-column.active-mode .timer-digits {
-      color: var(--green-main);
-      text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
-    }
-    .clock-column.hazard-mode .timer-digits {
-      color: var(--hazard-main);
-      text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
-    }
+    .tactical-subtitle { font-size: 0.78rem; color: var(--text-secondary); letter-spacing: 0.8px; font-weight: 600; }
 
-    .clock-footer-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.78rem;
-      margin-top: 4px;
-    }
-    .target-time-display {
-      color: var(--cyan-main);
-      font-weight: 700;
-      font-family: monospace;
-      font-size: 0.95rem;
-    }
-    .beta-badge {
-      background: rgba(59, 130, 246, 0.15);
-      border: 1px solid rgba(59, 130, 246, 0.4);
-      color: #60a5fa;
-      font-size: 0.62rem;
-      padding: 2px 6px;
+    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .org-tag {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid var(--hazard-main);
+      color: var(--hazard-main);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 800;
+      padding: 3px 12px;
       border-radius: 4px;
+      letter-spacing: 2px;
+    }
+    .author-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
       font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-
-    /* Barra de Progreso Interna */
-    .progress-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      margin-top: 4px;
-    }
-    .progress-bar-bg {
-      width: 100%;
-      height: 5px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 3px;
-      overflow: hidden;
-      border: 1px solid var(--border-color);
-    }
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      transition: width 0.5s ease;
-      box-shadow: 0 0 10px currentColor;
-    }
-
-    /* Sección de Luces LED Estilo Sirena */
-    .leds-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-    }
-    .leds-title-box {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .leds-heading {
-      font-size: 1.05rem;
-      font-weight: 800;
-      color: var(--text-main);
-      letter-spacing: 0.5px;
-    }
-    .leds-subheading {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .leds-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 15px;
-    }
-
-    .led-box {
-      background: rgba(2, 6, 23, 0.6);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 18px 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-
-    /* Estilo Sirena / Baliza LED con Animación */
-    .siren-beacon {
-      width: 54px;
-      height: 54px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      transition: all 0.3s ease;
-    }
-
-    .siren-beacon::before {
-      content: '';
-      position: absolute;
-      inset: -4px;
-      border-radius: 50%;
-      border: 2px dashed currentColor;
-      animation: beaconRotate 4s linear infinite;
-      opacity: 0.6;
-    }
-
-    @keyframes beaconRotate {
-      100% { transform: rotate(360deg); }
-    }
-
-    @keyframes sirenPulse {
-      0% { transform: scale(1); box-shadow: 0 0 10px currentColor, inset 0 0 10px currentColor; }
-      50% { transform: scale(1.08); box-shadow: 0 0 25px currentColor, inset 0 0 18px currentColor; filter: brightness(1.3); }
-      100% { transform: scale(1); box-shadow: 0 0 10px currentColor, inset 0 0 10px currentColor; }
-    }
-
-    .led-box.green .siren-beacon {
-      background: radial-gradient(circle, #34d399 0%, #059669 100%);
-      color: var(--green-main);
-      animation: sirenPulse 1.4s infinite ease-in-out;
-    }
-    .led-box.green {
-      border-color: rgba(16, 185, 129, 0.4);
-      background: rgba(16, 185, 129, 0.03);
-    }
-
-    .led-box.red .siren-beacon {
-      background: radial-gradient(circle, #fb7185 0%, #e11d48 100%);
-      color: var(--red-main);
-      animation: sirenPulse 0.9s infinite ease-in-out;
-    }
-    .led-box.red {
-      border-color: rgba(244, 63, 94, 0.4);
-      background: rgba(244, 63, 94, 0.03);
-    }
-
-    .led-box.hazard .siren-beacon {
-      background: radial-gradient(circle, #fbbf24 0%, #d97706 100%);
-      color: var(--hazard-main);
-      animation: sirenPulse 0.7s infinite ease-in-out;
-    }
-    .led-box.hazard {
-      border-color: rgba(245, 158, 11, 0.4);
-      background: rgba(245, 158, 11, 0.03);
-    }
-
-    .led-box.off .siren-beacon {
-      background: #1e293b;
-      color: #475569;
-      box-shadow: none;
-    }
-    .led-box.off .siren-beacon::before { display: none; }
-    .led-box.off {
-      border-color: var(--border-color);
-      opacity: 0.7;
-    }
-
-    .siren-icon {
-      font-size: 1.3rem;
-      font-weight: 900;
-      color: #fff;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
-    }
-
-    .led-title {
-      font-size: 0.78rem;
-      font-weight: 800;
+      color: rgba(148, 163, 184, 0.5);
       letter-spacing: 1px;
-      color: var(--text-main);
-    }
-    .led-status {
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .led-box.green .led-status { color: var(--green-main); }
-    .led-box.red .led-status { color: var(--red-main); }
-    .led-box.hazard .led-status { color: var(--hazard-main); }
-    .led-box.off .led-status { color: var(--text-muted); }
-
-    .led-countdown {
-      font-size: 0.72rem;
-      font-family: monospace;
-      color: var(--cyan-main);
-      font-weight: 600;
-    }
-
-    .leds-footer-desc {
-      text-align: center;
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      border-top: 1px solid var(--border-color);
-      padding-top: 12px;
-      letter-spacing: 0.3px;
-    }
-    .leds-footer-desc span { color: var(--green-main); font-weight: 700; }
-
-    /* Barra de Herramientas */
-    .toolbar-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .action-btn {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      color: var(--text-main);
-      padding: 10px 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      transition: all 0.25s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
       text-transform: uppercase;
     }
-    .action-btn:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--cyan-main);
-      color: var(--cyan-main);
-      box-shadow: 0 0 12px rgba(0, 243, 255, 0.2);
-    }
-    .action-btn.active {
-      background: rgba(0, 243, 255, 0.12);
-      border-color: var(--cyan-main);
-      color: var(--cyan-main);
-      box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+    .author-tag span { color: rgba(248, 250, 252, 0.8); }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
     }
 
-    .precision-note {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .precision-note b { color: var(--hazard-main); }
+    .top-panel { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
 
-    footer {
-      text-align: center;
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      padding: 20px;
-      border-top: 1px solid var(--border-color);
-      margin-top: auto;
-      letter-spacing: 0.5px;
+    .status-group { display: flex; flex-direction: column; gap: 10px; }
+    .phase-badge { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-radius: 10px; transition: all 0.3s ease; }
+    .phase-badge.prep { background: var(--red-bg); border: 1px solid var(--red-main); box-shadow: 0 0 20px var(--red-glow); }
+    .phase-badge.active { background: var(--green-bg); border: 1px solid var(--green-main); box-shadow: 0 0 20px var(--green-glow); }
+    .phase-badge.hazard { background: var(--hazard-bg); border: 1px solid var(--hazard-main); box-shadow: 0 0 25px var(--hazard-glow); }
+
+    .phase-indicator-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .phase-badge.prep .phase-indicator-dot { background: var(--red-main); box-shadow: 0 0 12px var(--red-main); }
+    .phase-badge.active .phase-indicator-dot { background: var(--green-main); box-shadow: 0 0 12px var(--green-main); }
+    .phase-badge.hazard .phase-indicator-dot { background: var(--hazard-main); box-shadow: 0 0 12px var(--hazard-main); }
+
+    .phase-text h2 { font-family: 'Orbitron', sans-serif; font-size: 1.15rem; font-weight: 800; letter-spacing: 1px; }
+    .phase-text p { font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px; }
+    .next-phase-text { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; padding-left: 4px; }
+
+    .clock-box {
+      background: rgba(3, 7, 18, 0.95);
+      border: 2px solid var(--red-main);
+      border-radius: 12px;
+      padding: 16px 28px;
+      text-align: right;
+      box-shadow: 0 0 25px var(--red-glow);
+      min-width: 290px;
     }
+    .clock-box.active-mode { border-color: var(--green-main); box-shadow: 0 0 25px var(--green-glow); }
+    .clock-box.hazard-mode { border-color: var(--hazard-main); box-shadow: 0 0 30px var(--hazard-glow); }
+
+    .clock-label { font-family: 'Orbitron', sans-serif; font-size: 0.68rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-secondary); }
+    .clock-digits {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.9rem;
+      font-weight: 800;
+      color: var(--red-main);
+      text-shadow: 0 0 20px var(--red-glow);
+      line-height: 1;
+      margin: 4px 0;
+    }
+    .clock-box.active-mode .clock-digits { color: var(--green-main); text-shadow: 0 0 20px var(--green-glow); }
+    .clock-box.hazard-mode .clock-digits { color: var(--hazard-main); text-shadow: 0 0 25px var(--hazard-glow); }
+
+    .clock-sub { display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
+    .target-time-badge { background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px; color: #fff; font-family: 'JetBrains Mono', monospace; }
+
+    .progress-container { margin-top: 18px; }
+    .progress-info { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
+    .progress-bar-bg { width: 100%; height: 7px; background: rgba(255, 255, 255, 0.06); border-radius: 10px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background: var(--red-main); transition: width 1s linear; }
+
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; }
+    .section-title { font-family: 'Orbitron', sans-serif; font-size: 0.95rem; font-weight: 800; letter-spacing: 1.2px; }
+    .section-subtitle { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
+
+    .led-container-3d { display: flex; justify-content: space-around; align-items: center; gap: 16px; padding: 10px 0; flex-wrap: wrap; }
+    .led-item { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 110px; }
+    .led-orb { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+    .led-orb::before {
+      content: ''; position: absolute; top: 7%; left: 18%; width: 64%; height: 38%; border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 100%); pointer-events: none;
+    }
+    .led-item-label { font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 800; color: var(--text-secondary); letter-spacing: 1px; }
+    .led-item-status { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; }
+    .led-item-countdown {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: #ffffff;
+      background: rgba(3, 7, 18, 0.6); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .led-item.green .led-orb { background: radial-gradient(circle at 35% 30%, #6ee7b7 0%, #10b981 50%, #047857 100%); border: 3px solid #34d399; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(0,60,30,0.7), 0 0 25px rgba(16,185,129,0.65); }
+    .led-item.green .led-item-status { color: var(--green-main); }
+
+    .led-item.red .led-orb { background: radial-gradient(circle at 35% 30%, #fca5a5 0%, #ef4444 50%, #b91c1c 100%); border: 3px solid #f87171; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(60,0,0,0.7), 0 0 25px rgba(239,68,68,0.65); }
+    .led-item.red .led-item-status { color: var(--red-main); }
+
+    @keyframes siren-flash {
+      0% { background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%); border: 3px solid #fbbf24; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(60,40,0,0.7), 0 0 15px rgba(245,158,11,0.3); transform: scale(0.98); }
+      50% { background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f59e0b 40%, #92400e 100%); border: 3px solid #fef08a; box-shadow: 0 10px 35px rgba(0,0,0,0.5), inset 0 -6px 10px rgba(120,60,0,0.7), 0 0 45px rgba(245,158,11,0.95); transform: scale(1.06); }
+      100% { background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%); border: 3px solid #fbbf24; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(60,40,0,0.7), 0 0 15px rgba(245,158,11,0.3); transform: scale(0.98); }
+    }
+    .led-item.hazard .led-orb { animation: siren-flash 0.6s infinite ease-in-out; }
+    .led-item.hazard .led-item-status { color: var(--hazard-main); }
+
+    .led-item.off .led-orb { background: radial-gradient(circle at 35% 30%, #475569 0%, #1e293b 60%, #0f172a 100%); border: 3px solid #334155; box-shadow: 0 6px 12px rgba(0,0,0,0.5), inset 0 -4px 8px rgba(0,0,0,0.8); }
+    .led-item.off .led-item-status { color: #64748b; }
+
+    .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-top: 10px; }
+    .schedule-card {
+      background: rgba(15, 23, 42, 0.7); border: 1px solid var(--card-border); border-left: 4px solid var(--green-main);
+      border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; transition: all 0.25s ease;
+    }
+    .schedule-header { display: flex; justify-content: space-between; align-items: center; }
+    .schedule-tag { font-family: 'Orbitron', sans-serif; font-size: 0.72rem; font-weight: 800; color: var(--cyan-hud); letter-spacing: 1px; }
+    .schedule-date-badge { font-size: 0.68rem; background: rgba(6, 182, 212, 0.15); color: var(--cyan-hud); padding: 2px 6px; border-radius: 4px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .schedule-window { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; }
+    .schedule-eta { font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+    .toolbar-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .btn {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); color: var(--text-primary);
+      padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 8px;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-1px); }
+    .btn-audio { background: rgba(15, 23, 42, 0.8); border-color: rgba(148, 163, 184, 0.3); color: var(--text-secondary); }
+    .btn-audio.active { background: rgba(16, 185, 129, 0.15); border-color: var(--green-main); color: var(--green-main); box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+    .btn-stealth { background: transparent; border: 1px solid rgba(255, 255, 255, 0.04); color: rgba(148, 163, 184, 0.25); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .btn-stealth:hover { color: var(--text-secondary); border-color: rgba(255, 255, 255, 0.1); }
+
+    .admin-panel { background: rgba(15, 23, 42, 0.95); border: 1px dashed var(--hazard-main); border-radius: 12px; padding: 18px 22px; display: none; }
+    .admin-panel.active { display: block; }
+    .admin-header { font-family: 'Orbitron', sans-serif; font-size: 0.82rem; color: var(--hazard-main); margin-bottom: 12px; }
+    .adjust-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    .adjust-label { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); min-width: 110px; font-weight: 700; }
+    .quick-adjust-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-adjust {
+      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff;
+      padding: 6px 12px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-adjust:hover { background: var(--cyan-hud); color: #000; }
+    .btn-adjust.minus { border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+    .btn-adjust.minus:hover { background: var(--red-main); color: #fff; }
+
+    .footer-stats {
+      margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 16px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-secondary);
+      background: rgba(15, 23, 42, 0.4); padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05); flex-wrap: wrap;
+    }
+    .stat-pill { display: flex; align-items: center; gap: 6px; }
+    .stat-value { color: var(--cyan-hud); font-weight: 800; }
+    .pulse-online { width: 6px; height: 6px; background-color: var(--green-main); border-radius: 50%; animation: pulse-glow 2s infinite; }
   </style>
 </head>
 <body>
 
-  <!-- Barra de Navegación -->
-  <nav class="top-nav">
-    <div class="nav-brand">
-      <div class="nav-logo">CZ Timer</div>
-      <div class="nav-sub">Rastreador de Hangar de Star Citizen</div>
-    </div>
-    <div class="nav-links">
-      <button class="nav-btn">🛡️ Panel</button>
-      <button class="nav-btn active">🚀 Hangares Ejecutivos</button>
-      <button class="nav-btn">⚔️ Zonas Disputadas</button>
-    </div>
-    <div class="lang-selector">
-      🌐 ES Español
-    </div>
-  </nav>
-
-  <!-- Contenedor Principal -->
-  <div class="main-container">
-    
-    <div class="section-header">
-      <h1 class="section-title">
-        🚀 Estado del Hangar Ejecutivo
-      </h1>
-      <div class="section-subtitle">
-        🌐 Ciclo Global PYAM-EXHANG • Sincronizado en Todos los Servidores • <b>ES2942</b>
+  <div class="container">
+    <header class="header-tactical">
+      <div class="header-left">
+        <div class="sys-badge"><span class="pulse-dot"></span> SISTEMA TÁCTICO EXECUTIVE HANGARS · ONLINE</div>
+        <h1 class="tactical-title">MONITOR DE HANGARES EJECUTIVOS</h1>
+        <div class="tactical-subtitle">Ciclo global sincronizado de 185 min (3h 05m) · 5 Indicadores Ópticos · ES2942</div>
       </div>
-    </div>
+      <div class="header-right">
+        <div class="org-tag">ESPAÑA2942</div>
+        <div class="author-tag">CREADO POR <span>ERYNDAL</span></div>
+      </div>
+    </header>
 
-    <!-- Monitor Principal -->
-    <div class="monitor-card">
-      <div class="phase-column">
-        <div id="phaseBadgeBox" class="phase-badge-box prep">
-          <span id="phaseTitleMain">FASE ROJA (CARGANDO)</span>
-          <span id="phaseDescMain" class="phase-subtext">Hangar Cerrado - Carga de sistemas (120 min)</span>
-        </div>
-        <div id="nextPhaseText" class="next-phase-info">Siguiente: FASE VERDE (Abierto 60 min)</div>
-        
-        <div class="progress-wrapper">
-          <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted);">
-            <span id="progressStepText">Calculando hitos tácticos...</span>
-            <span id="progressPercentText">Progreso del Ciclo: 0%</span>
+    <div class="card">
+      <div class="top-panel">
+        <div class="status-group">
+          <div class="phase-badge prep" id="phaseBadge">
+            <div class="phase-indicator-dot"></div>
+            <div class="phase-text">
+              <h2 id="phaseTitle">FASE ROJA</h2>
+              <p id="phaseDesc">Hangar Cerrado · Carga de sistemas (120 min)</p>
+            </div>
           </div>
-          <div class="progress-bar-bg">
-            <div id="progressBarFill" class="progress-bar-fill"></div>
+          <div class="next-phase-text" id="nextPhaseText">Siguiente: FASE VERDE (Abierto 60 min)</div>
+        </div>
+
+        <div class="clock-box" id="clockBox">
+          <div class="clock-label" id="clockLabel">TIEMPO HASTA APERTURA</div>
+          <div class="clock-digits" id="timerDigits">02:00:00</div>
+          <div class="clock-sub">
+            <span id="targetTimeLabel">⏰ Abre a las</span>
+            <span class="target-time-badge" id="targetTime">--:--</span>
           </div>
         </div>
       </div>
 
-      <div id="clockColumn" class="clock-column">
-        <div class="clock-header-row">
-          <span id="clockLabel">Tiempo Hasta Apertura</span>
-          <span>Sincronización Activa</span>
+      <div class="progress-container">
+        <div class="progress-info">
+          <span id="progressStepText">Siguiente cambio de luz en --:--</span>
+          <span id="progressPercentText">Progreso: 0%</span>
         </div>
-        <div id="timerDigits" class="timer-digits">--:--:--</div>
-        <div class="clock-footer-row">
-          <div>
-            <span id="targetTimeLabel" style="color: var(--text-muted); font-size: 0.75rem;">⏰ Abre a las:</span> 
-            <span id="targetTime" class="target-time-display">--:--</span>
-          </div>
-          <span class="beta-badge">BETA ES2942</span>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
         </div>
       </div>
     </div>
 
-    <!-- Tarjeta de Luces LED Estilo Sirena -->
-    <div class="leds-card">
-      <div class="leds-title-box">
-        <h2 class="leds-heading">Luces de Estado del Hangar</h2>
-        <div class="leds-subheading">Indicadores LED tipo baliza estroboscópica en tiempo real</div>
+    <div class="card">
+      <div class="section-header">
+        <h3 class="section-title">INDICADORES ÓPTICOS (5 LUCES)</h3>
+        <span class="section-subtitle">Estado del panel de control frontal</span>
       </div>
-
-      <div class="leds-grid" id="ledsGridContainer">
-        <div class="led-box" id="ledItem1">
-          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
-          <div class="led-title">LED 1</div>
-          <div class="led-status" id="led1Status">CERRADO</div>
-          <div class="led-countdown" id="led1Countdown">--:--:--</div>
-        </div>
-        <div class="led-box" id="ledItem2">
-          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
-          <div class="led-title">LED 2</div>
-          <div class="led-status" id="led2Status">CERRADO</div>
-          <div class="led-countdown" id="led2Countdown">--:--:--</div>
-        </div>
-        <div class="led-box" id="ledItem3">
-          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
-          <div class="led-title">LED 3</div>
-          <div class="led-status" id="led3Status">CERRADO</div>
-          <div class="led-countdown" id="led3Countdown">--:--:--</div>
-        </div>
-        <div class="led-box" id="ledItem4">
-          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
-          <div class="led-title">LED 4</div>
-          <div class="led-status" id="led4Status">CERRADO</div>
-          <div class="led-countdown" id="led4Countdown">--:--:--</div>
-        </div>
-        <div class="led-box" id="ledItem5">
-          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
-          <div class="led-title">LED 5</div>
-          <div class="led-status" id="led5Status">CERRADO</div>
-          <div class="led-countdown" id="led5Countdown">--:--:--</div>
-        </div>
-      </div>
-
-      <div class="leds-footer-desc">
-        Las luces se vuelven <span>VERDES</span> durante la fase de encendido • Se apagan durante el apagado • Todas apagadas = hangar cerrado.
+      <div class="led-container-3d">
+        <div class="led-item red" id="ledItem1"><div class="led-orb" id="ledIcon1"></div><div class="led-item-label">LUZ 1</div><div class="led-item-status" id="led1Status">PENDIENTE</div><div class="led-item-countdown" id="led1Countdown">--:--:--</div></div>
+        <div class="led-item red" id="ledItem2"><div class="led-orb" id="ledIcon2"></div><div class="led-item-label">LUZ 2</div><div class="led-item-status" id="led2Status">PENDIENTE</div><div class="led-item-countdown" id="led2Countdown">--:--:--</div></div>
+        <div class="led-item red" id="ledItem3"><div class="led-orb" id="ledIcon3"></div><div class="led-item-label">LUZ 3</div><div class="led-item-status" id="led3Status">PENDIENTE</div><div class="led-item-countdown" id="led3Countdown">--:--:--</div></div>
+        <div class="led-item red" id="ledItem4"><div class="led-orb" id="ledIcon4"></div><div class="led-item-label">LUZ 4</div><div class="led-item-status" id="led4Status">PENDIENTE</div><div class="led-item-countdown" id="led4Countdown">--:--:--</div></div>
+        <div class="led-item red" id="ledItem5"><div class="led-orb" id="ledIcon5"></div><div class="led-item-label">LUZ 5</div><div class="led-item-status" id="led5Status">PENDIENTE</div><div class="led-item-countdown" id="led5Countdown">--:--:--</div></div>
       </div>
     </div>
 
-    <!-- Barra de Herramientas -->
-    <div class="toolbar-container">
-      <div class="btn-group">
-        <button id="audioToggleBtn" class="action-btn">🔕 Alertas IA: OFF</button>
-        <button id="manualSyncBtn" class="action-btn">⚡ Sincronizar Temporizador</button>
-        <button id="resetBtn" class="action-btn">🔄 Restablecer</button>
+    <div class="card">
+      <div class="section-header">
+        <h3 class="section-title">📅 PRÓXIMAS APERTURAS (FASE VERDE)</h3>
+        <span class="section-subtitle">Horarios calculados de las ventanas de 60 minutos (hora local)</span>
       </div>
-      <div class="precision-note">
-        ⚡ <b>Temporización de Precisión:</b> Sincroniza cuando veas el cambio del hangar en el juego (ES2942).
+      <div class="schedule-grid" id="scheduleGrid"></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <button class="btn btn-audio" id="audioToggleBtn">🔕 Alertas Sonoras: OFF</button>
+        <button class="btn btn-audio" id="notifToggleBtn">🔕 Notificaciones Push: OFF</button>
+      </div>
+      <button class="btn-stealth" id="toggleAdminBtn" title="Configuración de Sistema">⚙</button>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-header">⚠️ PANEL DE CORRECCIÓN DE TIEMPOS (ADMINISTRADOR EN LA NUBE)</div>
+      <div class="adjust-row">
+        <span class="adjust-label">⏱️ MINUTOS:</span>
+        <div class="quick-adjust-group">
+          <button class="btn-adjust minus" onclick="adjustOffset(-10 * 60 * 1000)">⏮️ -10 Min</button>
+          <button class="btn-adjust minus" onclick="adjustOffset(-1 * 60 * 1000)">◀️ -1 Min</button>
+          <button class="btn-adjust" onclick="adjustOffset(1 * 60 * 1000)">▶️ +1 Min</button>
+          <button class="btn-adjust" onclick="adjustOffset(10 * 60 * 1000)">⏭️ +10 Min</button>
+        </div>
+      </div>
+      <div class="adjust-row">
+        <span class="adjust-label">🎯 SEGUNDOS:</span>
+        <div class="quick-adjust-group">
+          <button class="btn-adjust minus" onclick="adjustOffset(-10 * 1000)">⏪ -10s</button>
+          <button class="btn-adjust minus" onclick="adjustOffset(-1 * 1000)">◂ -1s</button>
+          <button class="btn-adjust" onclick="adjustOffset(1 * 1000)">▸ +1s</button>
+          <button class="btn-adjust" onclick="adjustOffset(10 * 1000)">⏩ +10s</button>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+        <button class="btn" id="manualSyncBtn">🎯 Sincronización Manual Exacta</button>
+        <button class="btn" id="resetBtn" style="border-color: var(--red-main); color: var(--red-main);">🔄 Restablecer Cero</button>
       </div>
     </div>
 
+    <footer class="footer-stats">
+      <div class="stat-pill"><span class="pulse-online"></span><span class="stat-label">OPERATIVOS EN LÍNEA:</span><span class="stat-value" id="onlineCount">1</span></div>
+      <div class="stat-divider">|</div>
+      <div class="stat-pill"><span class="stat-label">ACCESOS:</span><span class="stat-value" id="visitsCount">---</span></div>
+      <div class="stat-divider">|</div>
+      <div class="stat-pill"><span class="stat-label">ZONA:</span><span class="stat-value" id="userTimezone">UTC</span></div>
+    </footer>
   </div>
-
-  <footer>
-    Star Citizen · Sistema de Control de Hangares Ejecutivos (ES2942) · Creado por Eryndal
-  </footer>
 
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAv9-oAYmG8tM24g-oVFluXFc7SIhtSfag",
       authDomain: "hangar-ejecutivo.firebaseapp.com",
-      databaseURL: "https://hangar-ejecutivo-default-rtdb.firebaseio.com/",
       projectId: "hangar-ejecutivo",
       storageBucket: "hangar-ejecutivo.firebasestorage.app",
       messagingSenderId: "344290123510",
@@ -673,17 +384,12 @@
       measurementId: "G-17ZBG6VN2R"
     };
 
-    try {
-      firebase.initializeApp(firebaseConfig);
-    } catch (e) {
-      console.warn("Firebase ya inicializado o error:", e);
-    }
-    
+    firebase.initializeApp(firebaseConfig);
     const dbRef = firebase.database().ref('hangar_sc_offset');
 
-    const PREP_DURATION = 120 * 60 * 1000;   // 120 min (Fase Roja)
-    const ACTIVE_DURATION = 60 * 60 * 1000;  // 60 min (Fase Verde)
-    const HAZARD_DURATION = 5 * 60 * 1000;   // 5 min (Evacuación)
+    const PREP_DURATION = 120 * 60 * 1000;   
+    const ACTIVE_DURATION = 60 * 60 * 1000;  
+    const HAZARD_DURATION = 5 * 60 * 1000;   
     const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION;
 
     const NUM_LEDS = 5;
@@ -693,15 +399,17 @@
 
     let adminCustomOffset = 0;
     let fetchedClockOffset = 0; 
-    let firebaseLoaded = false;
+
+    let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
+    let notifEnabled = localStorage.getItem('hangar_sc_notif') === 'true';
     let currentPhase = ''; 
 
-    const phaseBadgeBox = document.getElementById('phaseBadgeBox');
-    const phaseTitleMain = document.getElementById('phaseTitleMain');
-    const phaseDescMain = document.getElementById('phaseDescMain');
+    const phaseBadge = document.getElementById('phaseBadge');
+    const phaseTitle = document.getElementById('phaseTitle');
+    const phaseDesc = document.getElementById('phaseDesc');
     const nextPhaseText = document.getElementById('nextPhaseText');
-    const clockColumn = document.getElementById('clockColumn');
+    const clockBox = document.getElementById('clockBox');
     const clockLabel = document.getElementById('clockLabel');
     const timerDigits = document.getElementById('timerDigits');
     const targetTimeLabel = document.getElementById('targetTimeLabel');
@@ -709,25 +417,108 @@
     const progressStepText = document.getElementById('progressStepText');
     const progressPercentText = document.getElementById('progressPercentText');
     const progressBarFill = document.getElementById('progressBarFill');
+    const scheduleGrid = document.getElementById('scheduleGrid');
     const audioToggleBtn = document.getElementById('audioToggleBtn');
+    const notifToggleBtn = document.getElementById('notifToggleBtn');
+    const userTimezoneEl = document.getElementById('userTimezone');
+
+    try {
+      userTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch(e) {}
 
     dbRef.on('value', (snapshot) => {
-      firebaseLoaded = true;
       const val = snapshot.val();
-      adminCustomOffset = (val !== null) ? val : 0;
+      if (val !== null) {
+        adminCustomOffset = val;
+      } else {
+        adminCustomOffset = 0;
+      }
       updateHangarState();
-    }, (error) => {
-      if (!firebaseLoaded) { adminCustomOffset = 0; updateHangarState(); }
     });
 
-    setTimeout(() => {
-      if (!firebaseLoaded) updateHangarState();
-    }, 1500);
+    async function syncTrueTime() {
+      const endpoints = ['https://worldtimeapi.org/api/timezone/Etc/UTC', 'https://timeapi.io/api/time/current/zone?timeZone=UTC'];
+      for (const url of endpoints) {
+        try {
+          const startTime = Date.now();
+          const response = await fetch(url, { cache: 'no-cache' });
+          if (!response.ok) continue;
+          const data = await response.json();
+          const endTime = Date.now();
+          const latency = (endTime - startTime) / 2;
+          let serverTimeMs = data.datetime ? new Date(data.datetime).getTime() : (data.dateTime ? new Date(data.dateTime).getTime() : 0);
+          if (serverTimeMs) {
+            fetchedClockOffset = (serverTimeMs + latency) - endTime;
+            updateHangarState();
+            return;
+          }
+        } catch (e) {}
+      }
+    }
+
+    function updateNotifButtonUI() {
+      if (notifEnabled) {
+        notifToggleBtn.className = 'btn btn-audio active';
+        notifToggleBtn.textContent = '🔔 Notificaciones Push: ON';
+      } else {
+        notifToggleBtn.className = 'btn btn-audio';
+        notifToggleBtn.textContent = '🔕 Notificaciones Push: OFF';
+      }
+    }
+
+    async function requestDesktopNotification() {
+      if (!('Notification' in window)) { notifEnabled = false; updateNotifButtonUI(); return; }
+      if (Notification.permission === 'granted') { notifEnabled = true; }
+      else if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        notifEnabled = (permission === 'granted');
+      }
+      localStorage.setItem('hangar_sc_notif', notifEnabled);
+      updateNotifButtonUI();
+    }
+
+    function sendDesktopNotification(title, body) {
+      if (!notifEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+      try { new Notification(title, { body: body }); } catch(e) {}
+    }
+
+    notifToggleBtn.addEventListener('click', async () => {
+      if (!notifEnabled) await requestDesktopNotification();
+      else { notifEnabled = false; localStorage.setItem('hangar_sc_notif', 'false'); updateNotifButtonUI(); }
+    });
+    updateNotifButtonUI();
 
     let audioCtx = null;
     function initAudioContext() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type) {
+      if (!audioEnabled) return;
+      initAudioContext();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      if (type === 'light') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now); osc.stop(now + 0.35);
+      } else if (type === 'open') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.08); osc.stop(now + idx * 0.08 + 0.3);
+        });
+      }
     }
 
     function speakText(text) {
@@ -736,18 +527,18 @@
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'es-ES';
-        utterance.rate = 0.98;
+        utterance.rate = 0.95;
         window.speechSynthesis.speak(utterance);
       }
     }
 
     function updateAudioButtonUI() {
       if (audioEnabled) {
-        audioToggleBtn.className = 'action-btn active';
-        audioToggleBtn.textContent = '🔊 Alertas IA: ON';
+        audioToggleBtn.className = 'btn btn-audio active';
+        audioToggleBtn.textContent = '🔔 Alertas Sonoras: ON';
       } else {
-        audioToggleBtn.className = 'action-btn';
-        audioToggleBtn.textContent = '🔕 Alertas IA: OFF';
+        audioToggleBtn.className = 'btn btn-audio';
+        audioToggleBtn.textContent = '🔕 Alertas Sonoras: OFF';
       }
     }
 
@@ -755,7 +546,7 @@
       audioEnabled = !audioEnabled;
       localStorage.setItem('hangar_sc_audio', audioEnabled);
       updateAudioButtonUI();
-      if (audioEnabled) { initAudioContext(); speakText('Asistente de voz IA activado para hangares ejecutivos'); }
+      if (audioEnabled) { initAudioContext(); playSound('light'); speakText('Alertas activadas'); }
     });
     updateAudioButtonUI();
 
@@ -771,89 +562,80 @@
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((cycleElapsed / PREP_DURATION) * 100);
 
-        if (currentPhase !== 'PREP' && currentPhase !== '') {
-          speakText('Atención Eryndal. Fase roja iniciada. Hangar cerrando sistemas.');
-        }
+        phaseBadge.className = 'phase-badge prep';
+        phaseTitle.textContent = (timeLeft <= WARN_THRESHOLD) ? 'PRÓXIMO A ABRIRSE' : 'FASE ROJA (CARGANDO)';
+        phaseDesc.textContent = 'Hangar Cerrado · Carga de sistemas (120 min)';
+        nextPhaseText.textContent = 'Siguiente: FASE VERDE (Abierto 60 min)';
+
+        clockBox.className = 'clock-box';
+        clockLabel.textContent = 'TIEMPO HASTA APERTURA';
+        timerDigits.textContent = formattedTime;
+        targetTimeLabel.textContent = '⏰ Abre a las';
+        targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
+
+        const nextLightMs = PREP_STEP - (cycleElapsed % PREP_STEP);
+        progressStepText.textContent = `Próxima luz verde en: ${formatHHMMSS(nextLightMs)}`;
+        progressPercentText.textContent = `Progreso: ${percent}%`;
+        progressBarFill.style.width = `${percent}%`;
+        progressBarFill.style.background = 'var(--red-main)';
+
+        updateLedsDetailed(cycleElapsed);
         currentPhase = 'PREP';
 
-        // Definición de estado limpio para la pestaña del navegador
         if (timeLeft <= WARN_THRESHOLD) {
           statusLabelForTab = "Próximo a abrirse";
         } else {
           statusLabelForTab = "Cerrado";
         }
 
-        phaseBadgeBox.className = 'phase-badge-box prep';
-        phaseTitleMain.textContent = (timeLeft <= WARN_THRESHOLD) ? 'PRÓXIMO A ABRIRSE' : 'FASE ROJA (CARGANDO)';
-        phaseDescMain.textContent = 'Hangar Cerrado · Carga de sistemas (120 min)';
-        nextPhaseText.textContent = 'Siguiente: FASE VERDE (Abierto 60 min)';
-
-        clockColumn.className = 'clock-column';
-        clockLabel.textContent = 'TIEMPO HASTA APERTURA';
-        timerDigits.textContent = formattedTime;
-        targetTimeLabel.textContent = '⏰ Abre a las:';
-        targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
-
-        const nextLightMs = PREP_STEP - (cycleElapsed % PREP_STEP);
-        progressStepText.textContent = `Próxima baliza verde en: ${formatHHMMSS(nextLightMs)}`;
-        progressPercentText.textContent = `Progreso del Ciclo: ${percent}%`;
-        progressBarFill.style.width = `${percent}%`;
-        progressBarFill.style.background = 'var(--red-main)';
-
-        updateLedsDetailed(cycleElapsed);
-
       } else if (cycleElapsed < PREP_DURATION + ACTIVE_DURATION) {
-        if (currentPhase !== 'ACTIVE') {
-          speakText('¡Alerta ES2942! Hangar abierto. Fase verde activa.');
+        if (currentPhase !== 'ACTIVE' && currentPhase !== '') {
+          playSound('open');
+          speakText('Apertura de hangar iniciada.');
+          sendDesktopNotification('🚀 Hangar Abierto', '¡Acceso concedido!');
         }
-        currentPhase = 'ACTIVE';
-        statusLabelForTab = "Abierto";
 
         const activeElapsed = cycleElapsed - PREP_DURATION;
         const timeLeft = ACTIVE_DURATION - activeElapsed;
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((activeElapsed / ACTIVE_DURATION) * 100);
 
-        phaseBadgeBox.className = 'phase-badge-box active';
-        phaseTitleMain.textContent = 'FASE VERDE (ABIERTO)';
-        phaseDescMain.textContent = 'Hangar Abierto · Acceso autorizado';
+        phaseBadge.className = 'phase-badge active';
+        phaseTitle.textContent = 'FASE VERDE (ABIERTO)';
+        phaseDesc.textContent = 'Hangar Abierto · Tiempo activo disponible';
         nextPhaseText.textContent = 'Siguiente: EVACUACIÓN (5 min)';
 
-        clockColumn.className = 'clock-column active-mode';
+        clockBox.className = 'clock-box active-mode';
         clockLabel.textContent = 'TIEMPO HASTA CIERRE';
         timerDigits.textContent = formattedTime;
-        targetTimeLabel.textContent = '⏰ Cierra a las:';
+        targetTimeLabel.textContent = '⏰ Cierra a las';
         targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
 
         const nextLightOffMs = ACTIVE_STEP - (activeElapsed % ACTIVE_STEP);
-        progressStepText.textContent = `Siguiente baliza se apaga en: ${formatHHMMSS(nextLightOffMs)}`;
+        progressStepText.textContent = `Siguiente luz se apaga en: ${formatHHMMSS(nextLightOffMs)}`;
         progressPercentText.textContent = `Consumido: ${percent}%`;
         progressBarFill.style.width = `${percent}%`;
         progressBarFill.style.background = 'var(--green-main)';
 
         updateLedsDetailed(cycleElapsed);
+        currentPhase = 'ACTIVE';
+        statusLabelForTab = "Abierto";
 
       } else {
-        if (currentPhase !== 'HAZARD') {
-          speakText('¡Precaución! Período de gracia y evacuación en curso.');
-        }
-        currentPhase = 'HAZARD';
-        statusLabelForTab = "Evacuación";
-
         const hazardElapsed = cycleElapsed - (PREP_DURATION + ACTIVE_DURATION);
         const timeLeft = HAZARD_DURATION - hazardElapsed;
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((hazardElapsed / HAZARD_DURATION) * 100);
 
-        phaseBadgeBox.className = 'phase-badge-box hazard';
-        phaseTitleMain.textContent = 'PERÍODO DE GRACIA / GAS';
-        phaseDescMain.textContent = '¡EVACUACIÓN INMINENTE!';
+        phaseBadge.className = 'phase-badge hazard';
+        phaseTitle.textContent = 'PERÍODO DE GRACIA / GAS';
+        phaseDesc.textContent = '¡EVACUACIÓN! Cierre completo';
         nextPhaseText.textContent = 'Siguiente: REINICIO DE CICLO';
 
-        clockColumn.className = 'clock-column hazard-mode';
+        clockBox.className = 'clock-box hazard-mode';
         clockLabel.textContent = 'BLOQUEO EN';
         timerDigits.textContent = formattedTime;
-        targetTimeLabel.textContent = '⚠️ Bloqueo a las:';
+        targetTimeLabel.textContent = '⚠️ Bloqueo a las';
         targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
 
         progressStepText.textContent = '¡Evacuar el hangar de inmediato!';
@@ -862,10 +644,14 @@
         progressBarFill.style.background = 'var(--hazard-main)';
 
         updateLedsDetailed(cycleElapsed);
+        currentPhase = 'HAZARD';
+        statusLabelForTab = "Evacuación";
       }
 
-      // Título de pestaña optimizado en tiempo real: [Estado] [Temporizador] | ES2942
+      // Título de pestaña dinámico en tiempo real con estado, temporizador e identificador ES2942
       document.title = `${statusLabelForTab} - ${timerDigits.textContent} | ES2942`;
+
+      updateSchedule(trueNow, cycleElapsed);
     }
 
     function updateLedsDetailed(cycleElapsed) {
@@ -873,67 +659,71 @@
         const item = document.getElementById(`ledItem${i}`);
         const statusEl = document.getElementById(`led${i}Status`);
         const countdownEl = document.getElementById(`led${i}Countdown`);
-        const iconEl = item.querySelector('.siren-icon');
         const calc = getLightData(i, cycleElapsed);
 
-        if (calc.state === 'GREEN') {
-          item.className = 'led-box green';
-          statusEl.textContent = 'ACTIVO';
-          iconEl.textContent = '✓';
-        } else if (calc.state === 'PENDING') {
-          item.className = 'led-box red';
-          statusEl.textContent = 'PENDIENTE';
-          iconEl.textContent = '✕';
-        } else if (calc.state === 'OFF') {
-          item.className = 'led-box off';
-          statusEl.textContent = 'CERRADO';
-          iconEl.textContent = '✕';
-        } else if (calc.state === 'HAZARD') {
-          item.className = 'led-box hazard';
-          statusEl.textContent = 'PELIGRO';
-          iconEl.textContent = '⚠️';
-        }
+        if (calc.state === 'GREEN') { item.className = 'led-item green'; statusEl.textContent = 'ACTIVO'; }
+        else if (calc.state === 'PENDING') { item.className = 'led-item red'; statusEl.textContent = 'PENDIENTE'; }
+        else if (calc.state === 'OFF') { item.className = 'led-item off'; statusEl.textContent = 'CONSUMIDO'; }
+        else if (calc.state === 'HAZARD') { item.className = 'led-item hazard'; statusEl.textContent = 'PELIGRO'; }
 
         countdownEl.textContent = formatHHMMSS(calc.timeToNext);
       }
     }
 
     function getLightData(i, cycleElapsed) {
+      const prepTurnGreenTime = i * PREP_STEP;     
+      const activeTurnOffTime = PREP_DURATION + (i - 1) * ACTIVE_STEP;
       const hazardStartTime = PREP_DURATION + ACTIVE_DURATION;
       const cycleEnd = TOTAL_CYCLE;
+
       let state = 'PENDING';
-      let nextMilestone = 0;
+      let nextMilestone = prepTurnGreenTime;
 
-      if (cycleElapsed < PREP_DURATION) {
-        const prepTurnGreenTime = i * PREP_STEP;
-        if (cycleElapsed >= prepTurnGreenTime) {
-          state = 'GREEN';
-          nextMilestone = PREP_DURATION;
-        } else {
-          state = 'PENDING';
-          nextMilestone = prepTurnGreenTime;
-        }
-      } else if (cycleElapsed < hazardStartTime) {
-        const activeElapsed = cycleElapsed - PREP_DURATION;
-        const reverseIndex = NUM_LEDS - i; 
-        const lightOffThreshold = reverseIndex * ACTIVE_STEP;
-
-        if (activeElapsed >= lightOffThreshold) {
-          state = 'GREEN';
-          nextMilestone = PREP_DURATION + ((reverseIndex + 1) * ACTIVE_STEP);
-          if (nextMilestone > hazardStartTime) nextMilestone = hazardStartTime;
-        } else {
-          state = 'OFF';
-          nextMilestone = PREP_DURATION + lightOffThreshold;
-        }
-      } else {
-        state = 'HAZARD';
-        nextMilestone = cycleEnd;
-      }
+      if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) { state = 'GREEN'; nextMilestone = PREP_DURATION; }
+      else if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) { state = 'GREEN'; nextMilestone = activeTurnOffTime; }
+      else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) { state = 'OFF'; nextMilestone = hazardStartTime; }
+      else if (cycleElapsed >= hazardStartTime && cycleElapsed < cycleEnd) { state = 'HAZARD'; nextMilestone = cycleEnd; }
 
       let timeToNext = nextMilestone - cycleElapsed;
       if (timeToNext <= 0) timeToNext = 1000;
       return { state, timeToNext };
+    }
+
+    function updateSchedule(trueNow, cycleElapsed) {
+      const currentCycleStart = trueNow - cycleElapsed;
+      let firstFutureOpen = currentCycleStart + PREP_DURATION;
+      if (cycleElapsed >= PREP_DURATION) firstFutureOpen += TOTAL_CYCLE;
+
+      let html = '';
+      const todayDate = new Date(trueNow).getDate();
+
+      for (let i = 0; i < 4; i++) {
+        const openMs = firstFutureOpen + (i * TOTAL_CYCLE);
+        const closeMs = openMs + ACTIVE_DURATION;
+        const msUntil = openMs - trueNow;
+        const openDate = new Date(openMs);
+        const closeDate = new Date(closeMs);
+
+        const openStr = openDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const closeStr = closeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const isTomorrow = openDate.getDate() !== todayDate;
+        const dateTag = isTomorrow ? `<span class="schedule-date-badge">MAÑANA</span>` : `<span class="schedule-date-badge" style="background:rgba(16,185,129,0.15); color:var(--green-main);">HOY</span>`;
+
+        const hoursUntil = Math.floor(msUntil / (1000 * 60 * 60));
+        const minsUntil = Math.floor((msUntil % (1000 * 60 * 60)) / (1000 * 60));
+
+        html += `
+          <div class="schedule-card">
+            <div class="schedule-header">
+              <span class="schedule-tag">${i === 0 ? 'PRÓXIMA APERTURA' : `APERTURA +${i + 1}`}</span>
+              ${dateTag}
+            </div>
+            <div class="schedule-window">${openStr} - ${closeStr}</div>
+            <div class="schedule-eta">⏳ En ${hoursUntil}h ${minsUntil}m aprox.</div>
+          </div>
+        `;
+      }
+      scheduleGrid.innerHTML = html;
     }
 
     function formatHHMMSS(ms) {
@@ -945,10 +735,35 @@
       return new Date(nowAdjusted + msRemaining).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
+    function adjustOffset(ms) {
+      adminCustomOffset += ms;
+      dbRef.set(adminCustomOffset); 
+    }
+
+    const toggleAdminBtn = document.getElementById('toggleAdminBtn');
+    const adminPanel = document.getElementById('adminPanel');
+
+    if (isAdminUnlocked) adminPanel.classList.add('active');
+
+    toggleAdminBtn.addEventListener('click', () => {
+      if (!isAdminUnlocked) {
+        const pass = prompt("Introduce la clave de Administrador:");
+        if (pass === "achupirla") {
+          isAdminUnlocked = true;
+          localStorage.setItem('hangar_sc_admin', 'true');
+          adminPanel.classList.add('active');
+        } else if (pass !== null) alert("Clave incorrecta.");
+      } else {
+        isAdminUnlocked = false;
+        localStorage.setItem('hangar_sc_admin', 'false');
+        adminPanel.classList.remove('active');
+      }
+    });
+
     document.getElementById('manualSyncBtn').addEventListener('click', () => {
-      const phaseInput = prompt("1 = FASE ROJA (120 min)\n2 = FASE VERDE (60 min)\n3 = PERÍODO GRACIA (5 min)", "1");
+      const phaseInput = prompt("1 = FASE ROJA (120 min)\n2 = FASE VERDE (60 min)\n3 = PERÍODO GRACIA / PELIGRO (5 min)", "1");
       if (!phaseInput) return;
-      const timeInput = prompt("Introduce el tiempo restante (HH:MM:SS):", "01:50:00");
+      const timeInput = prompt("Introduce el tiempo restante de la fase (HH:MM:SS):", "01:50:00");
       if (!timeInput) return;
       const parts = timeInput.trim().split(':');
       let totalMs = 0;
@@ -961,21 +776,20 @@
         else if (phaseInput.trim() === "3") targetElapsed = TOTAL_CYCLE - totalMs;
 
         const trueNow = Date.now() + fetchedClockOffset;
-        const currentElapsed = (trueNow + adminCustomOffset) % TOTAL_CYCLE;
-        const diff = targetElapsed - currentElapsed;
-        const newOffset = adminCustomOffset + diff;
-
-        dbRef.set(newOffset).catch(err => console.log("Escritura bloqueada:", err));
-        alert("¡Sincronización procesada correctamente (ES2942)!");
+        const currentElapsed = trueNow % TOTAL_CYCLE;
+        const newOffset = targetElapsed - currentElapsed;
+        dbRef.set(newOffset);
+        alert("¡Sincronización manual enviada a la nube!");
       }
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-      dbRef.set(0).catch(err => console.log("Escritura bloqueada:", err));
-      alert('Sincronización restablecida a 0.');
+      dbRef.set(0);
+      alert('Sincronización restablecida.');
     });
 
     setInterval(updateHangarState, 1000);
+    syncTrueTime();
   </script>
 </body>
 </html>
