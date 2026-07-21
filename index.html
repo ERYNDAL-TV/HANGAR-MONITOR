@@ -318,7 +318,7 @@
       transition: width 1s linear;
     }
 
-    /* --- PANEL DE INDICADORES EN 3D (5 LUCES) --- */
+    /* --- PANEL DE INDICADORES EN 3D FLOTANTES (5 LUCES) --- */
     .section-header {
       display: flex;
       justify-content: space-between;
@@ -667,7 +667,7 @@
               <p id="phaseDesc">Hangar Cerrado · Carga de Sistemas (120 min)</p>
             </div>
           </div>
-          <div class="next-phase-text" id="nextPhaseText">Siguiente: FASE VERDE (60 min abiertos)</div>
+          <div class="next-phase-text" id="nextPhaseText">Siguiente: FASE VERDE (Abierto 60 min)</div>
         </div>
 
         <div class="clock-box" id="clockBox">
@@ -683,7 +683,7 @@
       <div class="progress-container">
         <div class="progress-info">
           <span id="progressStepText">Siguiente cambio de luz en --:--</span>
-          <span id="progressPercentText">Progreso de Fase: 0%</span>
+          <span id="progressPercentText">Progreso: 0%</span>
         </div>
         <div class="progress-bar-bg">
           <div class="progress-bar-fill" id="progressBarFill"></div>
@@ -702,31 +702,31 @@
         <div class="led-item red" id="ledItem1">
           <div class="led-orb" id="ledIcon1">🔴</div>
           <div class="led-item-label">LUZ 1</div>
-          <div class="led-item-status" id="led1Status">CARGANDO</div>
+          <div class="led-item-status" id="led1Status">PENDIENTE</div>
         </div>
 
         <div class="led-item red" id="ledItem2">
           <div class="led-orb" id="ledIcon2">🔴</div>
           <div class="led-item-label">LUZ 2</div>
-          <div class="led-item-status" id="led2Status">CARGANDO</div>
+          <div class="led-item-status" id="led2Status">PENDIENTE</div>
         </div>
 
         <div class="led-item red" id="ledItem3">
           <div class="led-orb" id="ledIcon3">🔴</div>
           <div class="led-item-label">LUZ 3</div>
-          <div class="led-item-status" id="led3Status">CARGANDO</div>
+          <div class="led-item-status" id="led3Status">PENDIENTE</div>
         </div>
 
         <div class="led-item red" id="ledItem4">
           <div class="led-orb" id="ledIcon4">🔴</div>
           <div class="led-item-label">LUZ 4</div>
-          <div class="led-item-status" id="led4Status">CARGANDO</div>
+          <div class="led-item-status" id="led4Status">PENDIENTE</div>
         </div>
 
         <div class="led-item red" id="ledItem5">
           <div class="led-orb" id="ledIcon5">🔴</div>
           <div class="led-item-label">LUZ 5</div>
-          <div class="led-item-status" id="led5Status">CARGANDO</div>
+          <div class="led-item-status" id="led5Status">PENDIENTE</div>
         </div>
       </div>
     </div>
@@ -743,19 +743,20 @@
       </div>
     </div>
 
-    <!-- BOTONERA DE ACCIÓN -->
+    <!-- BOTONERA DE ACCIÓN Y CONTROLES DE ALERTAS -->
     <div class="toolbar">
       <button class="btn btn-share" id="shareBtn">🔗 Copiar Enlace para la Org</button>
+      
       <button class="btn btn-audio" id="audioToggleBtn">🔕 Alertas: OFF</button>
 
-      <div id="memberNotice" class="status-badge">
-        🛰️ Vista Sincronizada
+      <div id="memberNotice" class="status-badge" style="color: var(--text-secondary);">
+        🛰️ Sincronizando...
       </div>
 
       <button class="btn btn-admin" id="toggleAdminBtn">🔑 Acceso Admin</button>
     </div>
 
-    <!-- PANEL ADMIN -->
+    <!-- PANEL EXCLUSIVO ADMIN -->
     <div class="admin-panel" id="adminPanel">
       <div class="admin-header">
         ⚠️ PANEL DE CORRECCIÓN DE TIEMPOS (ADMINISTRADOR)
@@ -790,11 +791,11 @@
   </div>
 
   <script>
-    // DURACIONES OFICIALES
+    // DURACIONES OFICIALES (185 MINUTOS TOTAL)
     const PREP_DURATION = 120 * 60 * 1000;   // 120 Min (Fase Roja)
     const ACTIVE_DURATION = 60 * 60 * 1000;  // 60 Min (Fase Verde)
     const HAZARD_DURATION = 5 * 60 * 1000;   // 5 Min (Gracia / Evacuación)
-    const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION; // 185 Min
+    const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION;
 
     const NUM_LEDS = 5;
     const PREP_STEP = PREP_DURATION / NUM_LEDS;     // 24 min por luz en Fase Roja
@@ -802,7 +803,11 @@
 
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
-    let customOffset = parseInt(localStorage.getItem('hangar_sc_offset_v6') || '0');
+    // Variables de temporización
+    let adminCustomOffset = parseInt(localStorage.getItem('hangar_sc_offset_v6') || '0');
+    let fetchedClockOffset = 0; // Desfase entre Date.now() local y la hora real del servidor
+    let isTimeSynced = false;
+
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
 
@@ -811,7 +816,7 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('sync')) {
-      customOffset = parseInt(urlParams.get('sync')) || 0;
+      adminCustomOffset = parseInt(urlParams.get('sync')) || 0;
     }
 
     const phaseBadge = document.getElementById('phaseBadge');
@@ -828,6 +833,46 @@
     const progressBarFill = document.getElementById('progressBarFill');
     const scheduleGrid = document.getElementById('scheduleGrid');
     const audioToggleBtn = document.getElementById('audioToggleBtn');
+    const memberNotice = document.getElementById('memberNotice');
+
+    /* --- SISTEMA DE SINCRONIZACIÓN HORARIA GLOBAL (NTP-like) --- */
+    async function syncTrueTime() {
+      memberNotice.innerHTML = `🛰️ Sincronizando UTC...`;
+      memberNotice.style.color = 'var(--text-secondary)';
+      
+      const startTime = Date.now();
+      try {
+        // Consultamos una API de tiempo global para obtener la hora UTC exacta
+        // Usamos cache: 'no-cache' para asegurar datos frescos
+        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', { cache: 'no-cache' });
+        const data = await response.json();
+        const endTime = Date.now();
+        
+        // Calculamos la latencia de la red (aproximadamente la mitad del tiempo de ida y vuelta)
+        const latency = (endTime - startTime) / 2;
+        
+        // Hora exacta del servidor ajustada por latencia
+        const serverTimeMs = new Date(data.datetime).getTime() + latency;
+        
+        // Calculamos cuánto está adelantado o atrasado el reloj local del PC/Móvil
+        fetchedClockOffset = serverTimeMs - endTime;
+        isTimeSynced = true;
+        
+        console.log(`📡 Sincronización exitosa. Desfase del reloj local: ${fetchedClockOffset}ms (Latencia: ${Math.round(latency)}ms)`);
+        
+        memberNotice.innerHTML = `🛰️ Vista Sincronizada UTC`;
+        memberNotice.style.color = 'var(--cyan-hud)';
+        
+      } catch (error) {
+        console.error("❌ Fallo en la sincronización de hora global:", error);
+        memberNotice.innerHTML = `⚠️ Error Sinc (Usando hora local)`;
+        memberNotice.style.color = 'var(--red-main)';
+        // Mantenemos fetchedClockOffset en 0 si falla
+      }
+      
+      // Forzamos actualización inmediata tras sincronizar
+      updateHangarState();
+    }
 
     /* AUDIO API */
     let audioCtx = null;
@@ -923,10 +968,15 @@
 
     updateAudioButtonUI();
 
-    /* BUCLE PRINCIPAL DE ESTADO DEL CICLO */
+    /* --- BUCLE PRINCIPAL DE ESTADO DEL CICLO CORREGIDO --- */
     function updateHangarState() {
-      const now = Date.now() + customOffset;
-      const cycleElapsed = now % TOTAL_CYCLE;
+      // 1. Hora "Real" sincronizada (independiente del reloj del dispositivo)
+      const trueNow = Date.now() + fetchedClockOffset;
+      
+      // 2. Aplicamos la calibración del Admin si existe
+      const nowAdjusted = trueNow + adminCustomOffset;
+      
+      const cycleElapsed = nowAdjusted % TOTAL_CYCLE;
 
       if (cycleElapsed < PREP_DURATION) {
         // --- FASE ROJA (120 MINUTOS) ---
@@ -951,7 +1001,7 @@
         const greenCount = Math.floor(cycleElapsed / PREP_STEP);
         const nextLightMs = PREP_STEP - (cycleElapsed % PREP_STEP);
         progressStepText.textContent = `Próxima luz verde en: ${formatHHMMSS(nextLightMs)}`;
-        progressPercentText.textContent = `Progreso Carga: ${percent}%`;
+        progressPercentText.textContent = `Progreso: ${percent}%`;
         progressBarFill.style.width = `${percent}%`;
         progressBarFill.style.background = 'var(--red-main)';
 
@@ -968,7 +1018,7 @@
         // --- FASE VERDE (60 MINUTOS) ---
         if (currentPhase !== 'ACTIVE' && currentPhase !== '') {
           playSound('open');
-          speakText('Apertura de hangar. Fase verde activa.');
+          speakText('Apertura de hangar iniciada. Acceso concedido.');
         }
 
         lastPrepGreenCount = -1;
@@ -1037,12 +1087,12 @@
         currentPhase = 'HAZARD';
       }
 
-      updateSchedule(now, cycleElapsed);
+      updateSchedule(trueNow, cycleElapsed); // Usamos hora real para horarios futuros locales
     }
 
-    /* LÓGICA EXACTA DE LAS 5 LUCES */
+    /* --- LÓGICA DE LAS 5 LUCES CORREGIDA --- */
 
-    // Fase Roja: De 0 a 5 luces se van volviendo VERDES de izquierda a derecha
+    // Fase Roja (i <= greenCount) -> VERDE 🟢, resto ROJO 🔴 (de izq a der)
     function updateLedsForPrep(greenCount) {
       for (let i = 1; i <= NUM_LEDS; i++) {
         const item = document.getElementById(`ledItem${i}`);
@@ -1061,7 +1111,7 @@
       }
     }
 
-    // Fase Verde: De 0 a 5 luces se van APAGANDO (OFF) de izquierda a derecha
+    // Fase Verde (i <= offCount) -> APAGADO ⚫, resto VERDE 🟢 (de izq a der)
     function updateLedsForActive(offCount) {
       for (let i = 1; i <= NUM_LEDS; i++) {
         const item = document.getElementById(`ledItem${i}`);
@@ -1080,7 +1130,7 @@
       }
     }
 
-    // Fase Gracia/Gas: Todas en modo aviso o apagadas
+    // Fase Gracia/Gas -> PELIGRO ⚠️
     function updateLedsForHazard() {
       for (let i = 1; i <= NUM_LEDS; i++) {
         const item = document.getElementById(`ledItem${i}`);
@@ -1094,8 +1144,8 @@
     }
 
     /* PROGRAMACIÓN DE APERTURAS FUTURAS */
-    function updateSchedule(now, cycleElapsed) {
-      const currentCycleStart = now - cycleElapsed;
+    function updateSchedule(trueNow, cycleElapsed) {
+      const currentCycleStart = trueNow - cycleElapsed;
       
       let firstFutureOpen = currentCycleStart + PREP_DURATION;
       if (cycleElapsed >= PREP_DURATION) {
@@ -1103,12 +1153,12 @@
       }
 
       let html = '';
-      const todayDate = new Date(now).getDate();
+      const todayDate = new Date(trueNow).getDate();
 
       for (let i = 0; i < 4; i++) {
         const openMs = firstFutureOpen + (i * TOTAL_CYCLE);
         const closeMs = openMs + ACTIVE_DURATION;
-        const msUntil = openMs - now;
+        const msUntil = openMs - trueNow;
 
         const openDate = new Date(openMs);
         const closeDate = new Date(closeMs);
@@ -1150,13 +1200,14 @@
     }
 
     function getTargetWallTime(msRemaining) {
+      // Usamos Date.now() local aquí para que la hora 'de reloj' coincida con su dispositivo
       const targetDate = new Date(Date.now() + msRemaining);
       return targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
     function adjustOffset(ms) {
-      customOffset += ms;
-      localStorage.setItem('hangar_sc_offset_v6', customOffset);
+      adminCustomOffset += ms;
+      localStorage.setItem('hangar_sc_offset_v6', adminCustomOffset);
       updateHangarState();
     }
 
@@ -1188,9 +1239,9 @@
     });
 
     document.getElementById('shareBtn').addEventListener('click', () => {
-      const cleanUrl = `${window.location.origin}${window.location.pathname}?sync=${customOffset}`;
+      const cleanUrl = `${window.location.origin}${window.location.pathname}?sync=${adminCustomOffset}`;
       navigator.clipboard.writeText(cleanUrl);
-      alert(`¡Enlace copiado al portapapeles!\n\nComparte este enlace para sincronizar a tus compañeros:\n\n${cleanUrl}`);
+      alert(`¡Enlace copiado!\n\nComparte esta URL para sincronizar a tus compañeros:\n\n${cleanUrl}`);
     });
 
     document.getElementById('manualSyncBtn').addEventListener('click', () => {
@@ -1214,24 +1265,28 @@
         else if (phaseInput.trim() === "2") targetElapsed = (PREP_DURATION + ACTIVE_DURATION) - totalMs;
         else if (phaseInput.trim() === "3") targetElapsed = TOTAL_CYCLE - totalMs;
 
-        const currentElapsed = Date.now() % TOTAL_CYCLE;
-        customOffset = targetElapsed - currentElapsed;
-        localStorage.setItem('hangar_sc_offset_v6', customOffset);
+        // Calculamos el offset basándonos en la hora real sincronizada, no la local
+        const trueNow = Date.now() + fetchedClockOffset;
+        const currentElapsed = trueNow % TOTAL_CYCLE;
+        adminCustomOffset = targetElapsed - currentElapsed;
+        localStorage.setItem('hangar_sc_offset_v6', adminCustomOffset);
         updateHangarState();
-        alert("¡Sincronización manual aplicada!");
+        alert("¡Sincronización manual aplicada sobre hora global!");
       }
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-      customOffset = 0;
+      adminCustomOffset = 0;
       localStorage.removeItem('hangar_sc_offset_v6');
       window.history.replaceState({}, document.title, window.location.pathname);
       updateHangarState();
       alert('Sincronización restablecida.');
     });
 
+    // Iniciamos bucle
     setInterval(updateHangarState, 1000);
-    updateHangarState();
+    // Primera sincronización al cargar
+    syncTrueTime();
   </script>
 </body>
 </html>
