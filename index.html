@@ -1,4 +1,188 @@
-<script>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitor de Hangares Ejecutivos - Star Citizen</title>
+  <!-- Firebase App (compat) y Database -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: #111827;
+      --bg-card-hover: #1f2937;
+      --border-color: #374151;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --green-main: #10b981;
+      --red-main: #ef4444;
+      --hazard-main: #f59e0b;
+      --accent-blue: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    .container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+    .tactical-title { font-size: 1.2rem; font-weight: bold; color: var(--accent-blue); letter-spacing: 1px; }
+    .tactical-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: background 0.2s; }
+    .btn:hover { background: var(--bg-card-hover); }
+    .btn-audio.active { background: rgba(16, 185, 129, 0.2); border-color: var(--green-main); color: var(--green-main); }
+    
+    .main-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    .phase-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .phase-badge { padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .phase-badge.prep { background: rgba(239, 68, 68, 0.2); color: var(--red-main); border: 1px solid var(--red-main); }
+    .phase-badge.active { background: rgba(16, 185, 129, 0.2); color: var(--green-main); border: 1px solid var(--green-main); }
+    .phase-badge.hazard { background: rgba(245, 158, 11, 0.2); color: var(--hazard-main); border: 1px solid var(--hazard-main); }
+    
+    .clock-container { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; flex-wrap: wrap; gap: 15px; }
+    .clock-box { display: flex; flex-direction: column; gap: 5px; }
+    .clock-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .timer-digits { font-size: 2.8rem; font-weight: 800; font-family: monospace; letter-spacing: 2px; color: var(--red-main); }
+    .clock-box.active-mode .timer-digits { color: var(--green-main); }
+    .clock-box.hazard-mode .timer-digits { color: var(--hazard-main); }
+    
+    .target-box { text-align: right; }
+    .target-time-label { font-size: 0.85rem; color: var(--text-muted); }
+    .target-time { font-size: 1.5rem; font-weight: bold; color: var(--text-main); }
+
+    .progress-container { display: flex; flex-direction: column; gap: 8px; }
+    .progress-info { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; gap: 5px; }
+    .progress-bar-bg { width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color); }
+    .progress-bar-fill { height: 100%; width: 0%; transition: width 0.5s ease; }
+
+    .leds-section { display: flex; flex-direction: column; gap: 12px; }
+    .section-title { font-size: 0.95rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .leds-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .led-item { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+    .led-indicator { width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+    .led-item.red .led-indicator { background: var(--red-main); color: var(--red-main); }
+    .led-item.green .led-indicator { background: var(--green-main); color: var(--green-main); }
+    .led-item.off .led-indicator { background: #4b5563; color: #4b5563; box-shadow: none; }
+    .led-item.hazard .led-indicator { background: var(--hazard-main); color: var(--hazard-main); }
+    .led-title { font-size: 0.85rem; font-weight: bold; }
+    .led-status { font-size: 0.75rem; color: var(--text-muted); }
+    .led-countdown { font-size: 0.8rem; font-family: monospace; color: var(--text-main); }
+
+    .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .schedule-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+    .schedule-header { display: flex; justify-content: space-between; align-items: center; }
+    .schedule-tag { font-size: 0.75rem; font-weight: bold; color: var(--text-muted); }
+    .schedule-date-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: rgba(239,68,68,0.15); color: var(--red-main); font-weight: bold; }
+    .schedule-window { font-size: 1.1rem; font-weight: bold; color: var(--text-main); }
+    .schedule-eta { font-size: 0.8rem; color: var(--text-muted); }
+
+    .admin-panel { display: none; background: rgba(239, 68, 68, 0.05); border: 1px dashed var(--red-main); border-radius: 8px; padding: 15px; margin-top: 10px; gap: 10px; flex-direction: column; }
+    .admin-panel.active { display: flex; }
+    .admin-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+    
+    footer { margin-top: 20px; font-size: 0.75rem; color: var(--text-muted); text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="tactical-title">MONITOR DE HANGARES EJECUTIVOS</div>
+        <div class="tactical-subtitle">Ciclo global sincronizado de 185 min (3h 05m) · 5 Indicadores Ópticos</div>
+      </div>
+      <div class="btn-group">
+        <button id="audioToggleBtn" class="btn">🔕 Alertas Sonoras: OFF</button>
+        <button id="notifToggleBtn" class="btn">🔕 Notificaciones Push: OFF</button>
+        <button id="toggleAdminBtn" class="btn" style="opacity: 0.3;" title="Modo Admin">⚙️</button>
+      </div>
+    </header>
+
+    <div class="main-card">
+      <div class="phase-header">
+        <div>
+          <h2 id="phaseTitle" style="font-size: 1.2rem; font-weight: bold;">CARGANDO...</h2>
+          <div id="phaseDesc" style="font-size: 0.85rem; color: var(--text-muted);">Sincronizando con servidores...</div>
+        </div>
+        <div id="phaseBadge" class="phase-badge prep">ESTADO</div>
+      </div>
+
+      <div class="clock-container">
+        <div id="clockBox" class="clock-box">
+          <span id="clockLabel" class="clock-label">TIEMPO HASTA APERTURA</span>
+          <span id="timerDigits" class="timer-digits">--:--:--</span>
+        </div>
+        <div class="target-box">
+          <div id="targetTimeLabel" class="target-time-label">⏰ Abre a las</div>
+          <div id="targetTime" class="target-time">--:--</div>
+        </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-info">
+          <span id="progressStepText">Calculando hitos...</span>
+          <span id="progressPercentText">Progreso: 0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="progressBarFill" class="progress-bar-fill"></div>
+        </div>
+        <div id="nextPhaseText" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Siguiente fase: --</div>
+      </div>
+
+      <div class="leds-section">
+        <div class="section-title">Indicadores Ópticos (5 Luces de Estado)</div>
+        <div class="leds-grid" id="ledsGridContainer">
+          <div class="led-item" id="ledItem1">
+            <div class="led-indicator"></div>
+            <div class="led-title">LUZ 1</div>
+            <div class="led-status" id="led1Status">ESPERA</div>
+            <div class="led-countdown" id="led1Countdown">--:--:--</div>
+          </div>
+          <div class="led-item" id="ledItem2">
+            <div class="led-indicator"></div>
+            <div class="led-title">LUZ 2</div>
+            <div class="led-status" id="led2Status">ESPERA</div>
+            <div class="led-countdown" id="led2Countdown">--:--:--</div>
+          </div>
+          <div class="led-item" id="ledItem3">
+            <div class="led-indicator"></div>
+            <div class="led-title">LUZ 3</div>
+            <div class="led-status" id="led3Status">ESPERA</div>
+            <div class="led-countdown" id="led3Countdown">--:--:--</div>
+          </div>
+          <div class="led-item" id="ledItem4">
+            <div class="led-indicator"></div>
+            <div class="led-title">LUZ 4</div>
+            <div class="led-status" id="led4Status">ESPERA</div>
+            <div class="led-countdown" id="led4Countdown">--:--:--</div>
+          </div>
+          <div class="led-item" id="ledItem5">
+            <div class="led-indicator"></div>
+            <div class="led-title">LUZ 5</div>
+            <div class="led-status" id="led5Status">ESPERA</div>
+            <div class="led-countdown" id="led5Countdown">--:--:--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="leds-section" style="margin-top: 10px;">
+        <div class="section-title">Próximas Aperturas Programadas</div>
+        <div class="schedule-grid" id="scheduleGrid"></div>
+      </div>
+
+      <div id="adminPanel" class="admin-panel">
+        <div style="font-size: 0.85rem; font-weight: bold; color: var(--red-main);">Panel de Control de Administrador (Sincronización Global Firebase)</div>
+        <div class="admin-controls">
+          <button id="manualSyncBtn" class="btn" style="background:var(--red-main); color:white; border:none;">Sincronizar Manualmente (Fase y Hora)</button>
+          <button id="resetBtn" class="btn">Restablecer Offset a 0</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Zona horaria detectada: <span id="userTimezone">UTC</span> · Sistema táctico de hangares ejecutivos
+    </footer>
+  </div>
+
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAv9-oAYmG8tM24g-oVFluXFc7SIhtSfag",
       authDomain: "hangar-ejecutivo.firebaseapp.com",
@@ -18,7 +202,7 @@
     
     const dbRef = firebase.database().ref('hangar_sc_offset');
 
-    // CONFIGURACIÓN OFICIAL CORRECTA (185 min total)
+    // CONFIGURACIÓN OFICIAL CORRECTA (185 min total: 120m roja, 60m verde, 5m evacuación)
     const PREP_DURATION = 120 * 60 * 1000;   // 120 min (Fase Roja)
     const ACTIVE_DURATION = 60 * 60 * 1000;  // 60 min (Fase Verde)
     const HAZARD_DURATION = 5 * 60 * 1000;   // 5 min (Evacuación / Gracia)
@@ -288,7 +472,6 @@
       let nextMilestone = 0;
 
       if (cycleElapsed < PREP_DURATION) {
-        // FASE ROJA: Las luces se encienden de 1 a 5 progresivamente
         const prepTurnGreenTime = i * PREP_STEP;
         if (cycleElapsed >= prepTurnGreenTime) {
           state = 'GREEN';
@@ -298,12 +481,8 @@
           nextMilestone = prepTurnGreenTime;
         }
       } else if (cycleElapsed < hazardStartTime) {
-        // FASE VERDE (ACTIVA): Las luces se apagan de 5 a 1 (Luz 1 es la última en apagarse)
         const activeElapsed = cycleElapsed - PREP_DURATION;
-        const activeRemaining = ACTIVE_DURATION - activeElapsed;
-        
-        // Invertimos el orden para que la luz i=1 corresponda al último bloque (últimos 12 min)
-        const reverseIndex = NUM_LEDS - i; // 4, 3, 2, 1, 0
+        const reverseIndex = NUM_LEDS - i; 
         const lightOffThreshold = reverseIndex * ACTIVE_STEP;
 
         if (activeElapsed >= lightOffThreshold) {
@@ -315,7 +494,6 @@
           nextMilestone = PREP_DURATION + lightOffThreshold;
         }
       } else {
-        // FASE DE GRACIA / PELIGRO
         state = 'HAZARD';
         nextMilestone = cycleEnd;
       }
@@ -371,11 +549,6 @@
       return new Date(nowAdjusted + msRemaining).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    function adjustOffset(ms) {
-      adminCustomOffset += ms;
-      dbRef.set(adminCustomOffset).catch(err => console.log("Escritura local/bloqueada:", err));
-    }
-
     const toggleAdminBtn = document.getElementById('toggleAdminBtn');
     const adminPanel = document.getElementById('adminPanel');
 
@@ -412,10 +585,12 @@
         else if (phaseInput.trim() === "3") targetElapsed = TOTAL_CYCLE - totalMs;
 
         const trueNow = Date.now() + fetchedClockOffset;
-        const currentElapsed = trueNow % TOTAL_CYCLE;
-        const newOffset = targetElapsed - currentElapsed;
+        const currentElapsed = (trueNow + adminCustomOffset) % TOTAL_CYCLE;
+        const diff = targetElapsed - currentElapsed;
+        const newOffset = adminCustomOffset + diff;
+
         dbRef.set(newOffset).catch(err => console.log("Escritura bloqueada:", err));
-        alert("¡Sincronización procesada!");
+        alert("¡Sincronización procesada y hora de cierre actualizada!");
       }
     });
 
@@ -426,3 +601,5 @@
 
     setInterval(updateHangarState, 1000);
   </script>
+</body>
+</html>
