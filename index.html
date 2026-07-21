@@ -546,6 +546,13 @@
       margin-top: 4px;
     }
 
+    .toolbar-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
     .btn {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--card-border);
@@ -828,7 +835,10 @@
 
     <!-- BOTONERA CON ACCESO ADMIN DISIMULADO -->
     <div class="toolbar">
-      <button class="btn btn-audio" id="audioToggleBtn">🔕 Alertas: OFF</button>
+      <div class="toolbar-group">
+        <button class="btn btn-audio" id="audioToggleBtn">🔕 Alertas Sonoras: OFF</button>
+        <button class="btn btn-audio" id="notifToggleBtn">🔕 Notificaciones Push: OFF</button>
+      </div>
       <button class="btn-stealth" id="toggleAdminBtn" title="Configuración de Sistema">⚙</button>
     </div>
 
@@ -873,17 +883,22 @@
       </div>
       <div class="stat-divider">|</div>
       <div class="stat-pill">
-        <span class="stat-label">ACCESOS TOTALES AL SISTEMA:</span>
+        <span class="stat-label">ACCESOS TOTALES:</span>
         <span class="stat-value" id="visitsCount">---</span>
+      </div>
+      <div class="stat-divider">|</div>
+      <div class="stat-pill">
+        <span class="stat-label">ZONA:</span>
+        <span class="stat-value" id="userTimezone">UTC</span>
       </div>
     </footer>
 
   </div>
 
   <script>
-    const PREP_DURATION = 120 * 60 * 1000;   // 120 Min (Fase Roja)
-    const ACTIVE_DURATION = 60 * 60 * 1000;  // 60 Min (Fase Verde)
-    const HAZARD_DURATION = 5 * 60 * 1000;   // 5 Min (Gracia / Evacuación)
+    const PREP_DURATION = 120 * 60 * 1000;   
+    const ACTIVE_DURATION = 60 * 60 * 1000;  
+    const HAZARD_DURATION = 5 * 60 * 1000;   
     const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION;
 
     const NUM_LEDS = 5;
@@ -896,14 +911,9 @@
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
+    let notifEnabled = localStorage.getItem('hangar_sc_notif') === 'true';
     let currentPhase = ''; 
-
     let prevLightStates = {};
-
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('sync')) {
-      adminCustomOffset = parseInt(urlParams.get('sync')) || 0;
-    }
 
     const phaseBadge = document.getElementById('phaseBadge');
     const phaseTitle = document.getElementById('phaseTitle');
@@ -919,6 +929,13 @@
     const progressBarFill = document.getElementById('progressBarFill');
     const scheduleGrid = document.getElementById('scheduleGrid');
     const audioToggleBtn = document.getElementById('audioToggleBtn');
+    const notifToggleBtn = document.getElementById('notifToggleBtn');
+    const userTimezoneEl = document.getElementById('userTimezone');
+
+    // Mostrar zona horaria local detectada
+    try {
+      userTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch(e) {}
 
     async function syncTrueTime() {
       const endpoints = [
@@ -948,6 +965,65 @@
         } catch (e) {}
       }
     }
+
+    /* GESTIÓN DE NOTIFICACIONES PUSH NATIVAS */
+    function updateNotifButtonUI() {
+      if (notifEnabled) {
+        notifToggleBtn.className = 'btn btn-audio active';
+        notifToggleBtn.textContent = '🔔 Notificaciones Push: ON';
+      } else {
+        notifToggleBtn.className = 'btn btn-audio';
+        notifToggleBtn.textContent = '🔕 Notificaciones Push: OFF';
+      }
+    }
+
+    async function requestDesktopNotification() {
+      if (!('Notification' in window)) {
+        alert('Este navegador no soporta notificaciones de escritorio.');
+        notifEnabled = false;
+        updateNotifButtonUI();
+        return;
+      }
+
+      if (Notification.permission === 'granted') {
+        notifEnabled = true;
+      } else if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          notifEnabled = true;
+        } else {
+          notifEnabled = false;
+          alert('Has denegado los permisos de notificación en el navegador.');
+        }
+      } else {
+        notifEnabled = false;
+        alert('Las notificaciones están bloqueadas en la configuración de tu navegador.');
+      }
+      localStorage.setItem('hangar_sc_notif', notifEnabled);
+      updateNotifButtonUI();
+    }
+
+    function sendDesktopNotification(title, body) {
+      if (!notifEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+      try {
+        new Notification(title, {
+          body: body,
+          icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>'
+        });
+      } catch(e) {}
+    }
+
+    notifToggleBtn.addEventListener('click', async () => {
+      if (!notifEnabled) {
+        await requestDesktopNotification();
+      } else {
+        notifEnabled = false;
+        localStorage.setItem('hangar_sc_notif', 'false');
+        updateNotifButtonUI();
+      }
+    });
+
+    updateNotifButtonUI();
 
     /* AUDIO API */
     let audioCtx = null;
@@ -1020,10 +1096,10 @@
     function updateAudioButtonUI() {
       if (audioEnabled) {
         audioToggleBtn.className = 'btn btn-audio active';
-        audioToggleBtn.textContent = '🔔 Alertas: ON';
+        audioToggleBtn.textContent = '🔔 Alertas Sonoras: ON';
       } else {
         audioToggleBtn.className = 'btn btn-audio';
-        audioToggleBtn.textContent = '🔕 Alertas: OFF';
+        audioToggleBtn.textContent = '🔕 Alertas Sonoras: OFF';
       }
     }
 
@@ -1043,7 +1119,7 @@
 
     updateAudioButtonUI();
 
-    /* --- BUCLE PRINCIPAL Y GESTIÓN DE ESTADOS --- */
+    /* BUCLE PRINCIPAL Y GESTIÓN DE ESTADOS */
     function updateHangarState() {
       const trueNow = Date.now() + fetchedClockOffset;
       const nowAdjusted = trueNow + adminCustomOffset;
@@ -1081,6 +1157,7 @@
         if (currentPhase !== 'ACTIVE' && currentPhase !== '') {
           playSound('open');
           speakText('Apertura de hangar iniciada. Acceso concedido.');
+          sendDesktopNotification('🚀 Hangar Ejecutivo Abierto', 'El hangar se encuentra en Fase Verde. ¡Acceso concedido!');
         }
 
         const activeElapsed = cycleElapsed - PREP_DURATION;
@@ -1115,6 +1192,7 @@
         if (currentPhase !== 'HAZARD' && currentPhase !== '') {
           playSound('hazard');
           speakText('Atención. Tiempo agotado. Evacuar hangar.');
+          sendDesktopNotification('⚠️ Alerta de Evacuación', 'El hangar se va a cerrar. ¡Evacuación inmediata!');
         }
 
         const hazardElapsed = cycleElapsed - (PREP_DURATION + ACTIVE_DURATION);
@@ -1186,7 +1264,6 @@
     }
 
     function getLightData(i, cycleElapsed) {
-      // CORREGIDO: Se usa i * PREP_STEP para que se enciendan progresivamente al completar cada bloque de 24 min
       const prepTurnGreenTime = i * PREP_STEP;     
       const activeTurnOffTime = PREP_DURATION + (i - 1) * ACTIVE_STEP;
       const hazardStartTime = PREP_DURATION + ACTIVE_DURATION;
@@ -1195,7 +1272,6 @@
       let state = 'PENDING';
       let nextMilestone = prepTurnGreenTime;
 
-      // Durante la fase roja, la luz se enciende cuando cycleElapsed supera su hito (prepTurnGreenTime)
       if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) {
         state = 'GREEN';
         nextMilestone = PREP_DURATION;
