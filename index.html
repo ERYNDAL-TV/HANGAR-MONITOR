@@ -376,7 +376,6 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    // Cambiamos a una referencia de anclaje absoluto del ciclo
     const dbRef = firebase.database().ref('hangar_sc_cycle_start');
 
     const PREP_DURATION = 120 * 60 * 1000;   
@@ -441,8 +440,7 @@
       if (val !== null) {
         globalCycleStart = val;
       } else {
-        // Si no hay datos, inicializamos con un anclaje por defecto basado en el momento actual
-        globalCycleStart = getTrueCurrentTime() - (120 * 60 * 1000); // Por defecto empezando en fase roja
+        globalCycleStart = getTrueCurrentTime() - (120 * 60 * 1000);
         dbRef.set(globalCycleStart);
       }
       updateHangarState();
@@ -723,10 +721,12 @@
       return new Date(trueNow + msRemaining).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
+    // Actualización optimista local inmediata para que cambie al instante en pantalla
     function adjustCycleAnchor(ms) {
       if (globalCycleStart !== null) {
         globalCycleStart += ms;
-        dbRef.set(globalCycleStart);
+        updateHangarState(); // Refresca la interfaz de inmediato
+        dbRef.set(globalCycleStart); // Sincroniza en la nube
       }
     }
 
@@ -767,16 +767,20 @@
         else if (p === "3") targetElapsed = TOTAL_CYCLE - totalMs;
 
         const trueNow = getTrueCurrentTime();
-        // Calculamos el nuevo timestamp de inicio absoluto del ciclo
         const newCycleStart = trueNow - targetElapsed;
-        dbRef.set(newCycleStart);
-        alert("¡Anclaje absoluto sincronizado en la nube!");
+        
+        globalCycleStart = newCycleStart; // Actualización local inmediata
+        updateHangarState();
+        dbRef.set(newCycleStart); // Sincronización en la nube
+        alert("¡Anclaje absoluto sincronizado!");
       }
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
       const trueNow = getTrueCurrentTime();
       const defaultStart = trueNow - (120 * 60 * 1000);
+      globalCycleStart = defaultStart; // Actualización local inmediata
+      updateHangarState();
       dbRef.set(defaultStart);
       alert('Anclaje restablecido.');
     });
