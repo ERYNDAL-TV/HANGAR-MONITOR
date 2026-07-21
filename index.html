@@ -398,7 +398,6 @@
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
     let adminCustomOffset = 0;
-    let fetchedClockOffset = 0; 
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
@@ -435,26 +434,6 @@
       }
       updateHangarState();
     });
-
-    async function syncTrueTime() {
-      const endpoints = ['https://worldtimeapi.org/api/timezone/Etc/UTC', 'https://timeapi.io/api/time/current/zone?timeZone=UTC'];
-      for (const url of endpoints) {
-        try {
-          const startTime = Date.now();
-          const response = await fetch(url, { cache: 'no-cache' });
-          if (!response.ok) continue;
-          const data = await response.json();
-          const endTime = Date.now();
-          const latency = (endTime - startTime) / 2;
-          let serverTimeMs = data.datetime ? new Date(data.datetime).getTime() : (data.dateTime ? new Date(data.dateTime).getTime() : 0);
-          if (serverTimeMs) {
-            fetchedClockOffset = (serverTimeMs + latency) - endTime;
-            updateHangarState();
-            return;
-          }
-        } catch (e) {}
-      }
-    }
 
     function updateNotifButtonUI() {
       if (notifEnabled) {
@@ -551,7 +530,8 @@
     updateAudioButtonUI();
 
     function updateHangarState() {
-      const trueNow = Date.now() + fetchedClockOffset;
+      // Base temporal unificada estrictamente con el reloj local + offset de administrador
+      const trueNow = Date.now();
       const nowAdjusted = trueNow + adminCustomOffset;
       const cycleElapsed = nowAdjusted % TOTAL_CYCLE;
 
@@ -648,9 +628,7 @@
         statusLabelForTab = "Evacuación";
       }
 
-      // Título de pestaña dinámico en tiempo real con estado, temporizador e identificador ES2942
       document.title = `${statusLabelForTab} - ${timerDigits.textContent} | ES2942`;
-
       updateSchedule(trueNow, cycleElapsed);
     }
 
@@ -775,7 +753,7 @@
         else if (phaseInput.trim() === "2") targetElapsed = (PREP_DURATION + ACTIVE_DURATION) - totalMs;
         else if (phaseInput.trim() === "3") targetElapsed = TOTAL_CYCLE - totalMs;
 
-        const trueNow = Date.now() + fetchedClockOffset;
+        const trueNow = Date.now();
         const currentElapsed = trueNow % TOTAL_CYCLE;
         const newOffset = targetElapsed - currentElapsed;
         dbRef.set(newOffset);
@@ -789,7 +767,7 @@
     });
 
     setInterval(updateHangarState, 1000);
-    syncTrueTime();
+    updateHangarState();
   </script>
 </body>
 </html>
