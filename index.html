@@ -1,379 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SISTEMA TÁCTICO DE HANGARES · ESPAÑA2942</title>
-  
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
-  
-  <!-- Firebase SDK para Sincronización en Tiempo Real -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-  <style>
-    :root {
-      --bg-dark: #050811;
-      --card-bg: rgba(11, 18, 32, 0.85);
-      --card-border: rgba(56, 189, 248, 0.15);
-      --green-main: #10b981;
-      --green-glow: rgba(16, 185, 129, 0.5);
-      --green-bg: rgba(16, 185, 129, 0.05);
-      --red-main: #ef4444;
-      --red-glow: rgba(239, 68, 68, 0.5);
-      --red-bg: rgba(239, 68, 68, 0.05);
-      --hazard-main: #f59e0b;
-      --hazard-glow: rgba(245, 158, 11, 0.5);
-      --hazard-bg: rgba(245, 158, 11, 0.08);
-      --cyan-hud: #06b6d4;
-      --cyan-glow: rgba(6, 182, 212, 0.4);
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-
-    body {
-      background-color: var(--bg-dark);
-      color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 24px 20px 36px 20px;
-      background-image: 
-        radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.08) 0%, transparent 65%),
-        linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
-      background-size: 100% 100%, 40px 40px, 40px 40px;
-    }
-
-    .container { width: 100%; max-width: 1050px; display: flex; flex-direction: column; gap: 20px; }
-
-    .header-tactical {
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(7, 12, 24, 0.98) 100%);
-      border: 1px solid var(--card-border);
-      border-top: 3px solid var(--cyan-hud);
-      border-radius: 12px;
-      padding: 16px 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .header-left { display: flex; flex-direction: column; gap: 4px; }
-    .sys-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      color: var(--cyan-hud);
-      letter-spacing: 1.5px;
-      font-weight: 700;
-    }
-    .pulse-dot {
-      width: 6px; height: 6px;
-      background-color: var(--cyan-hud);
-      border-radius: 50%;
-      box-shadow: 0 0 8px var(--cyan-hud);
-      animation: pulse-glow 1.5s infinite;
-    }
-
-    .tactical-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.35rem;
-      font-weight: 900;
-      letter-spacing: 1.5px;
-      color: #ffffff;
-      text-transform: uppercase;
-      line-height: 1.1;
-    }
-    .tactical-subtitle { font-size: 0.78rem; color: var(--text-secondary); letter-spacing: 0.8px; font-weight: 600; }
-
-    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-    .org-tag {
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid var(--hazard-main);
-      color: var(--hazard-main);
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 800;
-      padding: 3px 12px;
-      border-radius: 4px;
-      letter-spacing: 2px;
-    }
-    .author-tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.62rem;
-      font-weight: 700;
-      color: rgba(148, 163, 184, 0.5);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .author-tag span { color: rgba(248, 250, 252, 0.8); }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 24px 28px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-    }
-
-    .top-panel { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
-
-    .status-group { display: flex; flex-direction: column; gap: 10px; }
-    .phase-badge { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-radius: 10px; transition: all 0.3s ease; }
-    .phase-badge.prep { background: var(--red-bg); border: 1px solid var(--red-main); box-shadow: 0 0 20px var(--red-glow); }
-    .phase-badge.active { background: var(--green-bg); border: 1px solid var(--green-main); box-shadow: 0 0 20px var(--green-glow); }
-    .phase-badge.hazard { background: var(--hazard-bg); border: 1px solid var(--hazard-main); box-shadow: 0 0 25px var(--hazard-glow); }
-
-    .phase-indicator-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
-    .phase-badge.prep .phase-indicator-dot { background: var(--red-main); box-shadow: 0 0 12px var(--red-main); }
-    .phase-badge.active .phase-indicator-dot { background: var(--green-main); box-shadow: 0 0 12px var(--green-main); }
-    .phase-badge.hazard .phase-indicator-dot { background: var(--hazard-main); box-shadow: 0 0 12px var(--hazard-main); }
-
-    .phase-text h2 { font-family: 'Orbitron', sans-serif; font-size: 1.15rem; font-weight: 800; letter-spacing: 1px; }
-    .phase-text p { font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px; }
-    .next-phase-text { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; padding-left: 4px; }
-
-    .clock-box {
-      background: rgba(3, 7, 18, 0.95);
-      border: 2px solid var(--red-main);
-      border-radius: 12px;
-      padding: 16px 28px;
-      text-align: right;
-      box-shadow: 0 0 25px var(--red-glow);
-      min-width: 290px;
-    }
-    .clock-box.active-mode { border-color: var(--green-main); box-shadow: 0 0 25px var(--green-glow); }
-    .clock-box.hazard-mode { border-color: var(--hazard-main); box-shadow: 0 0 30px var(--hazard-glow); }
-
-    .clock-label { font-family: 'Orbitron', sans-serif; font-size: 0.68rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-secondary); }
-    .clock-digits {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 2.9rem;
-      font-weight: 800;
-      color: var(--red-main);
-      text-shadow: 0 0 20px var(--red-glow);
-      line-height: 1;
-      margin: 4px 0;
-    }
-    .clock-box.active-mode .clock-digits { color: var(--green-main); text-shadow: 0 0 20px var(--green-glow); }
-    .clock-box.hazard-mode .clock-digits { color: var(--hazard-main); text-shadow: 0 0 25px var(--hazard-glow); }
-
-    .clock-sub { display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
-    .target-time-badge { background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px; color: #fff; font-family: 'JetBrains Mono', monospace; }
-
-    .progress-container { margin-top: 18px; }
-    .progress-info { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
-    .progress-bar-bg { width: 100%; height: 7px; background: rgba(255, 255, 255, 0.06); border-radius: 10px; overflow: hidden; }
-    .progress-bar-fill { height: 100%; width: 0%; background: var(--red-main); transition: width 1s linear; }
-
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; }
-    .section-title { font-family: 'Orbitron', sans-serif; font-size: 0.95rem; font-weight: 800; letter-spacing: 1.2px; }
-    .section-subtitle { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
-
-    .led-container-3d { display: flex; justify-content: space-around; align-items: center; gap: 16px; padding: 10px 0; flex-wrap: wrap; }
-    .led-item { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 110px; }
-    .led-orb { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
-    .led-orb::before {
-      content: ''; position: absolute; top: 7%; left: 18%; width: 64%; height: 38%; border-radius: 50%;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 100%); pointer-events: none;
-    }
-    .led-item-label { font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 800; color: var(--text-secondary); letter-spacing: 1px; }
-    .led-item-status { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; }
-    .led-item-countdown {
-      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: #ffffff;
-      background: rgba(3, 7, 18, 0.6); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .led-item.green .led-orb { background: radial-gradient(circle at 35% 30%, #6ee7b7 0%, #10b981 50%, #047857 100%); border: 3px solid #34d399; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(0,60,30,0.7), 0 0 25px rgba(16,185,129,0.65); }
-    .led-item.green .led-item-status { color: var(--green-main); }
-
-    .led-item.red .led-orb { background: radial-gradient(circle at 35% 30%, #fca5a5 0%, #ef4444 50%, #b91c1c 100%); border: 3px solid #f87171; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(60,0,0,0.7), 0 0 25px rgba(239,68,68,0.65); }
-    .led-item.red .led-item-status { color: var(--red-main); }
-
-    @keyframes siren-flash {
-      0% { background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%); border: 3px solid #fbbf24; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(60,40,0,0.7), 0 0 15px rgba(245,158,11,0.3); transform: scale(0.98); }
-      50% { background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f59e0b 40%, #92400e 100%); border: 3px solid #fef08a; box-shadow: 0 10px 35px rgba(0,0,0,0.5), inset 0 -6px 10px rgba(120,60,0,0.7), 0 0 45px rgba(245,158,11,0.95); transform: scale(1.06); }
-      100% { background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%); border: 3px solid #fbbf24; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(60,40,0,0.7), 0 0 15px rgba(245,158,11,0.3); transform: scale(0.98); }
-    }
-    .led-item.hazard .led-orb { animation: siren-flash 0.6s infinite ease-in-out; }
-    .led-item.hazard .led-item-status { color: var(--hazard-main); }
-
-    .led-item.off .led-orb { background: radial-gradient(circle at 35% 30%, #475569 0%, #1e293b 60%, #0f172a 100%); border: 3px solid #334155; box-shadow: 0 6px 12px rgba(0,0,0,0.5), inset 0 -4px 8px rgba(0,0,0,0.8); }
-    .led-item.off .led-item-status { color: #64748b; }
-
-    .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-top: 10px; }
-    .schedule-card {
-      background: rgba(15, 23, 42, 0.7); border: 1px solid var(--card-border); border-left: 4px solid var(--green-main);
-      border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; transition: all 0.25s ease;
-    }
-    .schedule-header { display: flex; justify-content: space-between; align-items: center; }
-    .schedule-tag { font-family: 'Orbitron', sans-serif; font-size: 0.72rem; font-weight: 800; color: var(--cyan-hud); letter-spacing: 1px; }
-    .schedule-date-badge { font-size: 0.68rem; background: rgba(6, 182, 212, 0.15); color: var(--cyan-hud); padding: 2px 6px; border-radius: 4px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
-    .schedule-window { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; }
-    .schedule-eta { font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
-
-    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
-    .toolbar-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .btn {
-      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); color: var(--text-primary);
-      padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 8px;
-    }
-    .btn:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-1px); }
-    .btn-audio { background: rgba(15, 23, 42, 0.8); border-color: rgba(148, 163, 184, 0.3); color: var(--text-secondary); }
-    .btn-audio.active { background: rgba(16, 185, 129, 0.15); border-color: var(--green-main); color: var(--green-main); box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
-    .btn-stealth { background: transparent; border: 1px solid rgba(255, 255, 255, 0.04); color: rgba(148, 163, 184, 0.25); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-    .btn-stealth:hover { color: var(--text-secondary); border-color: rgba(255, 255, 255, 0.1); }
-
-    .admin-panel { background: rgba(15, 23, 42, 0.95); border: 1px dashed var(--hazard-main); border-radius: 12px; padding: 18px 22px; display: none; }
-    .admin-panel.active { display: block; }
-    .admin-header { font-family: 'Orbitron', sans-serif; font-size: 0.82rem; color: var(--hazard-main); margin-bottom: 12px; }
-    .adjust-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-    .adjust-label { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); min-width: 110px; font-weight: 700; }
-    .quick-adjust-group { display: flex; gap: 6px; flex-wrap: wrap; }
-    .btn-adjust {
-      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff;
-      padding: 6px 12px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 700; cursor: pointer;
-    }
-    .btn-adjust:hover { background: var(--cyan-hud); color: #000; }
-    .btn-adjust.minus { border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
-    .btn-adjust.minus:hover { background: var(--red-main); color: #fff; }
-
-    .footer-stats {
-      margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 16px;
-      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-secondary);
-      background: rgba(15, 23, 42, 0.4); padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05); flex-wrap: wrap;
-    }
-    .stat-pill { display: flex; align-items: center; gap: 6px; }
-    .stat-value { color: var(--cyan-hud); font-weight: 800; }
-    .pulse-online { width: 6px; height: 6px; background-color: var(--green-main); border-radius: 50%; animation: pulse-glow 2s infinite; }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <header class="header-tactical">
-      <div class="header-left">
-        <div class="sys-badge"><span class="pulse-dot"></span> SISTEMA TÁCTICO EXECUTIVE HANGARS · ONLINE</div>
-        <h1 class="tactical-title">MONITOR DE HANGARES EJECUTIVOS</h1>
-        <div class="tactical-subtitle">Ciclo global sincronizado de 185 min (3h 05m) · 5 Indicadores Ópticos</div>
-      </div>
-      <div class="header-right">
-        <div class="org-tag">ESPAÑA2942</div>
-        <div class="author-tag">CREADO POR <span>ERYNDAL</span></div>
-      </div>
-    </header>
-
-    <div class="card">
-      <div class="top-panel">
-        <div class="status-group">
-          <div class="phase-badge prep" id="phaseBadge">
-            <div class="phase-indicator-dot"></div>
-            <div class="phase-text">
-              <h2 id="phaseTitle">FASE ROJA</h2>
-              <p id="phaseDesc">Hangar Cerrado · Carga de sistemas (120 min)</p>
-            </div>
-          </div>
-          <div class="next-phase-text" id="nextPhaseText">Siguiente: FASE VERDE (Abierto 60 min)</div>
-        </div>
-
-        <div class="clock-box" id="clockBox">
-          <div class="clock-label" id="clockLabel">TIEMPO HASTA APERTURA</div>
-          <div class="clock-digits" id="timerDigits">02:00:00</div>
-          <div class="clock-sub">
-            <span id="targetTimeLabel">⏰ Abre a las</span>
-            <span class="target-time-badge" id="targetTime">--:--</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="progress-container">
-        <div class="progress-info">
-          <span id="progressStepText">Siguiente cambio de luz en --:--</span>
-          <span id="progressPercentText">Progreso: 0%</span>
-        </div>
-        <div class="progress-bar-bg">
-          <div class="progress-bar-fill" id="progressBarFill"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-header">
-        <h3 class="section-title">INDICADORES ÓPTICOS (5 LUCES)</h3>
-        <span class="section-subtitle">Estado del panel de control frontal</span>
-      </div>
-      <div class="led-container-3d">
-        <div class="led-item red" id="ledItem1"><div class="led-orb" id="ledIcon1"></div><div class="led-item-label">LUZ 1</div><div class="led-item-status" id="led1Status">PENDIENTE</div><div class="led-item-countdown" id="led1Countdown">--:--:--</div></div>
-        <div class="led-item red" id="ledItem2"><div class="led-orb" id="ledIcon2"></div><div class="led-item-label">LUZ 2</div><div class="led-item-status" id="led2Status">PENDIENTE</div><div class="led-item-countdown" id="led2Countdown">--:--:--</div></div>
-        <div class="led-item red" id="ledItem3"><div class="led-orb" id="ledIcon3"></div><div class="led-item-label">LUZ 3</div><div class="led-item-status" id="led3Status">PENDIENTE</div><div class="led-item-countdown" id="led3Countdown">--:--:--</div></div>
-        <div class="led-item red" id="ledItem4"><div class="led-orb" id="ledIcon4"></div><div class="led-item-label">LUZ 4</div><div class="led-item-status" id="led4Status">PENDIENTE</div><div class="led-item-countdown" id="led4Countdown">--:--:--</div></div>
-        <div class="led-item red" id="ledItem5"><div class="led-orb" id="ledIcon5"></div><div class="led-item-label">LUZ 5</div><div class="led-item-status" id="led5Status">PENDIENTE</div><div class="led-item-countdown" id="led5Countdown">--:--:--</div></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-header">
-        <h3 class="section-title">📅 PRÓXIMAS APERTURAS (FASE VERDE)</h3>
-        <span class="section-subtitle">Horarios calculados de las ventanas de 60 minutos (hora local)</span>
-      </div>
-      <div class="schedule-grid" id="scheduleGrid"></div>
-    </div>
-
-    <div class="toolbar">
-      <div class="toolbar-group">
-        <button class="btn btn-audio" id="audioToggleBtn">🔕 Alertas Sonoras: OFF</button>
-        <button class="btn btn-audio" id="notifToggleBtn">🔕 Notificaciones Push: OFF</button>
-      </div>
-      <button class="btn-stealth" id="toggleAdminBtn" title="Configuración de Sistema">⚙</button>
-    </div>
-
-    <div class="admin-panel" id="adminPanel">
-      <div class="admin-header">⚠️ PANEL DE CORRECCIÓN DE TIEMPOS (ADMINISTRADOR EN LA NUBE)</div>
-      <div class="adjust-row">
-        <span class="adjust-label">⏱️ MINUTOS:</span>
-        <div class="quick-adjust-group">
-          <button class="btn-adjust minus" onclick="adjustOffset(-10 * 60 * 1000)">⏮️ -10 Min</button>
-          <button class="btn-adjust minus" onclick="adjustOffset(-1 * 60 * 1000)">◀️ -1 Min</button>
-          <button class="btn-adjust" onclick="adjustOffset(1 * 60 * 1000)">▶️ +1 Min</button>
-          <button class="btn-adjust" onclick="adjustOffset(10 * 60 * 1000)">⏭️ +10 Min</button>
-        </div>
-      </div>
-      <div class="adjust-row">
-        <span class="adjust-label">🎯 SEGUNDOS:</span>
-        <div class="quick-adjust-group">
-          <button class="btn-adjust minus" onclick="adjustOffset(-10 * 1000)">⏪ -10s</button>
-          <button class="btn-adjust minus" onclick="adjustOffset(-1 * 1000)">◂ -1s</button>
-          <button class="btn-adjust" onclick="adjustOffset(1 * 1000)">▸ +1s</button>
-          <button class="btn-adjust" onclick="adjustOffset(10 * 1000)">⏩ +10s</button>
-        </div>
-      </div>
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
-        <button class="btn" id="manualSyncBtn">🎯 Sincronización Manual Exacta</button>
-        <button class="btn" id="resetBtn" style="border-color: var(--red-main); color: var(--red-main);">🔄 Restablecer Cero</button>
-      </div>
-    </div>
-
-    <footer class="footer-stats">
-      <div class="stat-pill"><span class="pulse-online"></span><span class="stat-label">OPERATIVOS EN LÍNEA:</span><span class="stat-value" id="onlineCount">1</span></div>
-      <div class="stat-divider">|</div>
-      <div class="stat-pill"><span class="stat-label">ACCESOS:</span><span class="stat-value" id="visitsCount">---</span></div>
-      <div class="stat-divider">|</div>
-      <div class="stat-pill"><span class="stat-label">ZONA:</span><span class="stat-value" id="userTimezone">UTC</span></div>
-    </footer>
-  </div>
-
-  <script>
+<script>
     const firebaseConfig = {
       apiKey: "AIzaSyAv9-oAYmG8tM24g-oVFluXFc7SIhtSfag",
       authDomain: "hangar-ejecutivo.firebaseapp.com",
@@ -385,9 +10,13 @@
       measurementId: "G-17ZBG6VN2R"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    // Inicializar Firebase de forma segura
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+      console.warn("Firebase ya inicializado o error:", e);
+    }
     
-    // CORREGIDO: Se elimina la URL del método database() ya que está configurada en firebaseConfig
     const dbRef = firebase.database().ref('hangar_sc_offset');
 
     const PREP_DURATION = 120 * 60 * 1000;   
@@ -402,6 +31,7 @@
 
     let adminCustomOffset = 0;
     let fetchedClockOffset = 0; 
+    let firebaseLoaded = false;
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
@@ -429,20 +59,27 @@
       userTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
     } catch(e) {}
 
+    // Escucha de Firebase con control de errores para evitar bloqueos
     dbRef.on('value', (snapshot) => {
+      firebaseLoaded = true;
       const val = snapshot.val();
-      if (val !== null) {
-        adminCustomOffset = val;
-      } else {
-        adminCustomOffset = 0;
-      }
+      adminCustomOffset = (val !== null) ? val : 0;
       updateHangarState();
+    }, (error) => {
+      console.warn("Aviso de Firebase (usando modo local por seguridad):", error);
+      if (!firebaseLoaded) {
+        adminCustomOffset = 0;
+        updateHangarState(); // Arranca el reloj local si Firebase deniega acceso
+      }
     });
 
-    async function syncTrueTime() {
-      fetchedClockOffset = 0;
-      updateHangarState();
-    }
+    // Seguridad por si Firebase tarda más de 1.5 segundos en responder
+    setTimeout(() => {
+      if (!firebaseLoaded) {
+        console.warn("Timeout de Firebase. Forzando inicio local...");
+        updateHangarState();
+      }
+    }, 1500);
 
     function updateNotifButtonUI() {
       if (notifEnabled) {
@@ -724,7 +361,7 @@
 
     function adjustOffset(ms) {
       adminCustomOffset += ms;
-      dbRef.set(adminCustomOffset); 
+      dbRef.set(adminCustomOffset).catch(err => console.log("Escritura local/bloqueada:", err));
     }
 
     const toggleAdminBtn = document.getElementById('toggleAdminBtn');
@@ -765,18 +402,15 @@
         const trueNow = Date.now() + fetchedClockOffset;
         const currentElapsed = trueNow % TOTAL_CYCLE;
         const newOffset = targetElapsed - currentElapsed;
-        dbRef.set(newOffset);
-        alert("¡Sincronización manual enviada a la nube!");
+        dbRef.set(newOffset).catch(err => console.log("Escritura bloqueada:", err));
+        alert("¡Sincronización procesada!");
       }
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-      dbRef.set(0);
+      dbRef.set(0).catch(err => console.log("Escritura bloqueada:", err));
       alert('Sincronización restablecida.');
     });
 
     setInterval(updateHangarState, 1000);
-    syncTrueTime();
   </script>
-</body>
-</html>
