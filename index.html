@@ -386,7 +386,9 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const dbRef = firebase.database('https://hangar-ejecutivo-default-rtdb.firebaseio.com/').ref('hangar_sc_offset');
+    
+    // CORREGIDO: Se elimina la URL del método database() ya que está configurada en firebaseConfig
+    const dbRef = firebase.database().ref('hangar_sc_offset');
 
     const PREP_DURATION = 120 * 60 * 1000;   
     const ACTIVE_DURATION = 60 * 60 * 1000;  
@@ -645,7 +647,7 @@
 
     function getLightData(i, cycleElapsed) {
       const prepTurnGreenTime = i * PREP_STEP;     
-      const activeTurnOffTime = PREP_DURATION + (i * ACTIVE_STEP); // Corrección en el cálculo progresivo
+      const activeTurnOffTime = PREP_DURATION + (i * ACTIVE_STEP); 
       const hazardStartTime = PREP_DURATION + ACTIVE_DURATION;
       const cycleEnd = TOTAL_CYCLE;
 
@@ -675,7 +677,7 @@
     }
 
     function updateSchedule(nowAdjusted, cycleElapsed) {
-      const currentCycleStart = nowAdjusted - cycleElapsed; // Corrección: sincronizado con nowAdjusted
+      const currentCycleStart = nowAdjusted - cycleElapsed; 
       let firstFutureOpen = currentCycleStart + PREP_DURATION;
       if (cycleElapsed >= PREP_DURATION) firstFutureOpen += TOTAL_CYCLE;
 
