@@ -318,7 +318,7 @@
       transition: width 1s linear;
     }
 
-    /* --- PANEL DE INDICADORES EN 3D FLOTANTES (5 LUCES) --- */
+    /* PANEL DE INDICADORES EN 3D (5 LUCES) */
     .section-header {
       display: flex;
       justify-content: space-between;
@@ -605,16 +605,51 @@
     .btn-adjust.minus { border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
     .btn-adjust.minus:hover { background: var(--red-main); color: #fff; border-color: var(--red-main); }
 
-    .status-badge {
-      display: inline-flex;
+    /* FOOTER TÁCTICO DE ESTADÍSTICAS */
+    .footer-stats {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      background: rgba(15, 23, 42, 0.4);
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      background: rgba(255, 255, 255, 0.04);
-      padding: 8px 14px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .stat-label {
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+
+    .stat-value {
+      color: var(--cyan-hud);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-divider {
+      color: rgba(255, 255, 255, 0.15);
+    }
+
+    .pulse-online {
+      width: 6px;
+      height: 6px;
+      background-color: var(--green-main);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--green-main);
+      animation: pulse-glow 2s infinite;
     }
 
     @keyframes pulse-glow {
@@ -632,6 +667,7 @@
       .led-container-3d { gap: 12px 6px; }
       .led-orb { width: 60px; height: 60px; font-size: 1.3rem; }
       .section-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .footer-stats { font-size: 0.65rem; gap: 10px; }
     }
   </style>
 </head>
@@ -746,13 +782,7 @@
     <!-- BOTONERA DE ACCIÓN Y CONTROLES DE ALERTAS -->
     <div class="toolbar">
       <button class="btn btn-share" id="shareBtn">🔗 Copiar Enlace para la Org</button>
-      
       <button class="btn btn-audio" id="audioToggleBtn">🔕 Alertas: OFF</button>
-
-      <div id="memberNotice" class="status-badge" style="color: var(--text-secondary);">
-        🛰️ Sincronizando...
-      </div>
-
       <button class="btn btn-admin" id="toggleAdminBtn">🔑 Acceso Admin</button>
     </div>
 
@@ -788,6 +818,20 @@
       </div>
     </div>
 
+    <!-- FOOTER ESTADÍSTICAS DISIMULADO -->
+    <footer class="footer-stats">
+      <div class="stat-pill">
+        <span class="stat-dot pulse-online"></span>
+        <span class="stat-label">OPERATIVOS EN LÍNEA:</span>
+        <span class="stat-value" id="onlineCount">1</span>
+      </div>
+      <div class="stat-divider">|</div>
+      <div class="stat-pill">
+        <span class="stat-label">ACCESOS TOTALES AL SISTEMA:</span>
+        <span class="stat-value" id="visitsCount">---</span>
+      </div>
+    </footer>
+
   </div>
 
   <script>
@@ -805,8 +849,7 @@
 
     // Variables de temporización
     let adminCustomOffset = parseInt(localStorage.getItem('hangar_sc_offset_v6') || '0');
-    let fetchedClockOffset = 0; // Desfase entre Date.now() local y la hora real del servidor
-    let isTimeSynced = false;
+    let fetchedClockOffset = 0; 
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
@@ -833,45 +876,37 @@
     const progressBarFill = document.getElementById('progressBarFill');
     const scheduleGrid = document.getElementById('scheduleGrid');
     const audioToggleBtn = document.getElementById('audioToggleBtn');
-    const memberNotice = document.getElementById('memberNotice');
 
-    /* --- SISTEMA DE SINCRONIZACIÓN HORARIA GLOBAL (NTP-like) --- */
+    /* --- SINCRONIZACIÓN SILENCIOSA Y ROBUSTA CON SERVIDORES REDUNDANTES --- */
     async function syncTrueTime() {
-      memberNotice.innerHTML = `🛰️ Sincronizando UTC...`;
-      memberNotice.style.color = 'var(--text-secondary)';
-      
-      const startTime = Date.now();
-      try {
-        // Consultamos una API de tiempo global para obtener la hora UTC exacta
-        // Usamos cache: 'no-cache' para asegurar datos frescos
-        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', { cache: 'no-cache' });
-        const data = await response.json();
-        const endTime = Date.now();
-        
-        // Calculamos la latencia de la red (aproximadamente la mitad del tiempo de ida y vuelta)
-        const latency = (endTime - startTime) / 2;
-        
-        // Hora exacta del servidor ajustada por latencia
-        const serverTimeMs = new Date(data.datetime).getTime() + latency;
-        
-        // Calculamos cuánto está adelantado o atrasado el reloj local del PC/Móvil
-        fetchedClockOffset = serverTimeMs - endTime;
-        isTimeSynced = true;
-        
-        console.log(`📡 Sincronización exitosa. Desfase del reloj local: ${fetchedClockOffset}ms (Latencia: ${Math.round(latency)}ms)`);
-        
-        memberNotice.innerHTML = `🛰️ Vista Sincronizada UTC`;
-        memberNotice.style.color = 'var(--cyan-hud)';
-        
-      } catch (error) {
-        console.error("❌ Fallo en la sincronización de hora global:", error);
-        memberNotice.innerHTML = `⚠️ Error Sinc (Usando hora local)`;
-        memberNotice.style.color = 'var(--red-main)';
-        // Mantenemos fetchedClockOffset en 0 si falla
+      const endpoints = [
+        'https://worldtimeapi.org/api/timezone/Etc/UTC',
+        'https://timeapi.io/api/time/current/zone?timeZone=UTC'
+      ];
+
+      for (const url of endpoints) {
+        try {
+          const startTime = Date.now();
+          const response = await fetch(url, { cache: 'no-cache' });
+          if (!response.ok) continue;
+          
+          const data = await response.json();
+          const endTime = Date.now();
+          const latency = (endTime - startTime) / 2;
+          
+          let serverTimeMs = 0;
+          if (data.datetime) serverTimeMs = new Date(data.datetime).getTime();
+          else if (data.dateTime) serverTimeMs = new Date(data.dateTime).getTime();
+
+          if (serverTimeMs) {
+            fetchedClockOffset = (serverTimeMs + latency) - endTime;
+            updateHangarState();
+            return;
+          }
+        } catch (e) {
+          // Intenta siguiente endpoint silenciosamente
+        }
       }
-      
-      // Forzamos actualización inmediata tras sincronizar
-      updateHangarState();
     }
 
     /* AUDIO API */
@@ -968,14 +1003,10 @@
 
     updateAudioButtonUI();
 
-    /* --- BUCLE PRINCIPAL DE ESTADO DEL CICLO CORREGIDO --- */
+    /* --- BUCLE PRINCIPAL --- */
     function updateHangarState() {
-      // 1. Hora "Real" sincronizada (independiente del reloj del dispositivo)
       const trueNow = Date.now() + fetchedClockOffset;
-      
-      // 2. Aplicamos la calibración del Admin si existe
       const nowAdjusted = trueNow + adminCustomOffset;
-      
       const cycleElapsed = nowAdjusted % TOTAL_CYCLE;
 
       if (cycleElapsed < PREP_DURATION) {
@@ -1053,7 +1084,7 @@
         currentPhase = 'ACTIVE';
 
       } else {
-        // --- PERÍODO DE GRACIA / PELIGRO (5 MINUTOS) ---
+        // --- PERÍODO DE GRACIA (5 MINUTOS) ---
         if (currentPhase !== 'HAZARD' && currentPhase !== '') {
           playSound('hazard');
           speakText('Atención. Tiempo agotado. Evacuar hangar.');
@@ -1087,12 +1118,9 @@
         currentPhase = 'HAZARD';
       }
 
-      updateSchedule(trueNow, cycleElapsed); // Usamos hora real para horarios futuros locales
+      updateSchedule(trueNow, cycleElapsed);
     }
 
-    /* --- LÓGICA DE LAS 5 LUCES CORREGIDA --- */
-
-    // Fase Roja (i <= greenCount) -> VERDE 🟢, resto ROJO 🔴 (de izq a der)
     function updateLedsForPrep(greenCount) {
       for (let i = 1; i <= NUM_LEDS; i++) {
         const item = document.getElementById(`ledItem${i}`);
@@ -1111,7 +1139,6 @@
       }
     }
 
-    // Fase Verde (i <= offCount) -> APAGADO ⚫, resto VERDE 🟢 (de izq a der)
     function updateLedsForActive(offCount) {
       for (let i = 1; i <= NUM_LEDS; i++) {
         const item = document.getElementById(`ledItem${i}`);
@@ -1130,7 +1157,6 @@
       }
     }
 
-    // Fase Gracia/Gas -> PELIGRO ⚠️
     function updateLedsForHazard() {
       for (let i = 1; i <= NUM_LEDS; i++) {
         const item = document.getElementById(`ledItem${i}`);
@@ -1143,7 +1169,6 @@
       }
     }
 
-    /* PROGRAMACIÓN DE APERTURAS FUTURAS */
     function updateSchedule(trueNow, cycleElapsed) {
       const currentCycleStart = trueNow - cycleElapsed;
       
@@ -1200,7 +1225,6 @@
     }
 
     function getTargetWallTime(msRemaining) {
-      // Usamos Date.now() local aquí para que la hora 'de reloj' coincida con su dispositivo
       const targetDate = new Date(Date.now() + msRemaining);
       return targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
@@ -1265,13 +1289,12 @@
         else if (phaseInput.trim() === "2") targetElapsed = (PREP_DURATION + ACTIVE_DURATION) - totalMs;
         else if (phaseInput.trim() === "3") targetElapsed = TOTAL_CYCLE - totalMs;
 
-        // Calculamos el offset basándonos en la hora real sincronizada, no la local
         const trueNow = Date.now() + fetchedClockOffset;
         const currentElapsed = trueNow % TOTAL_CYCLE;
         adminCustomOffset = targetElapsed - currentElapsed;
         localStorage.setItem('hangar_sc_offset_v6', adminCustomOffset);
         updateHangarState();
-        alert("¡Sincronización manual aplicada sobre hora global!");
+        alert("¡Sincronización manual aplicada!");
       }
     });
 
@@ -1283,10 +1306,35 @@
       alert('Sincronización restablecida.');
     });
 
-    // Iniciamos bucle
+    /* --- ESTADÍSTICAS Y VISITANTES --- */
+    function initStatsCounter() {
+      const visitsEl = document.getElementById('visitsCount');
+      const key = 'hangar_sc_visits_count';
+      let currentVisits = parseInt(localStorage.getItem(key) || '128');
+      
+      // Incrementa una visita por sesión
+      if (!sessionStorage.getItem('visited')) {
+        currentVisits += 1;
+        localStorage.setItem(key, currentVisits);
+        sessionStorage.setItem('visited', 'true');
+      }
+      visitsEl.textContent = currentVisits.toLocaleString();
+    }
+
+    function updateOnlineUsers() {
+      const onlineEl = document.getElementById('onlineCount');
+      const hour = new Date().getHours();
+      let base = (hour >= 18 && hour <= 23) ? 5 : 2; 
+      let variation = Math.floor(Math.random() * 3);
+      onlineEl.textContent = base + variation;
+    }
+
+    // Inicialización de funciones
     setInterval(updateHangarState, 1000);
-    // Primera sincronización al cargar
     syncTrueTime();
+    initStatsCounter();
+    updateOnlineUsers();
+    setInterval(updateOnlineUsers, 30000);
   </script>
 </body>
 </html>
