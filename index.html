@@ -416,11 +416,30 @@
     }
     .led-item.red .led-item-status { color: var(--red-main); }
 
+    /* ANIMACIÓN DE SIRENA PARA PELIGRO */
+    @keyframes siren-flash {
+      0% {
+        background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
+        border: 3px solid #fbbf24;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(60, 40, 0, 0.7), 0 0 15px rgba(245, 158, 11, 0.3);
+        transform: scale(0.98);
+      }
+      50% {
+        background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f59e0b 40%, #92400e 100%);
+        border: 3px solid #fef08a;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), inset 0 -6px 10px rgba(120, 60, 0, 0.7), 0 0 45px rgba(245, 158, 11, 0.95);
+        transform: scale(1.04);
+      }
+      100% {
+        background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
+        border: 3px solid #fbbf24;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(60, 40, 0, 0.7), 0 0 15px rgba(245, 158, 11, 0.3);
+        transform: scale(0.98);
+      }
+    }
+
     .led-item.hazard .led-orb {
-      background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
-      border: 3px solid #fbbf24;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(60, 40, 0, 0.7), 0 0 25px rgba(245, 158, 11, 0.65);
-      color: #ffffff;
+      animation: siren-flash 0.6s infinite ease-in-out;
     }
     .led-item.hazard .led-item-status { color: var(--hazard-main); }
 
@@ -1169,7 +1188,7 @@
         const status = document.getElementById(`led${i}Status`);
 
         item.className = 'led-item hazard';
-        icon.textContent = '⚠️';
+        icon.textContent = ''; // Limpio de símbolos feos, actúa como baliza luminosa pura
         status.textContent = 'PELIGRO';
       }
     }
