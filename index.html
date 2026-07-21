@@ -389,7 +389,7 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const dbRef = firebase.database().ref('hangar_sc_offset');
+    const dbRef = firebase.database('https://hangar-ejecutivo-default-rtdb.firebaseio.com/').ref('hangar_sc_offset');
 
     const PREP_DURATION = 120 * 60 * 1000;   
     const ACTIVE_DURATION = 60 * 60 * 1000;  
@@ -441,16 +441,7 @@
     });
 
     async function syncTrueTime() {
-      try {
-        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC', { cache: 'no-cache' });
-        if (response.ok) {
-          const data = await response.json();
-          const serverTimeMs = new Date(data.datetime).getTime();
-          fetchedClockOffset = serverTimeMs - Date.now();
-        }
-      } catch (e) {
-        fetchedClockOffset = 0;
-      }
+      fetchedClockOffset = 0;
       updateHangarState();
     }
 
