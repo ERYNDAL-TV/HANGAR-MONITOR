@@ -3,392 +3,663 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitor de Hangares Ejecutivos - Star Citizen</title>
+  <title>Cargando Sistema... | ES2942</title>
   <!-- Firebase App (compat) y Database -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <style>
     :root {
-      --bg-main: #020408;
-      --bg-card: #060e1a;
-      --bg-card-hover: #0b172a;
-      --border-color: #1e3a8a55;
-      --border-glow: rgba(0, 243, 255, 0.3);
-      --text-main: #e2e8f0;
+      --bg-main: #070b12;
+      --bg-nav: #0b111e;
+      --bg-card: #0e1626;
+      --bg-card-hover: #141f35;
+      --border-color: #1e293b;
+      --border-glow: rgba(0, 243, 255, 0.25);
+      --text-main: #f8fafc;
       --text-muted: #64748b;
       --cyan-main: #00f3ff;
       --cyan-glow: rgba(0, 243, 255, 0.4);
-      --blue-accent: #38bdf8;
       --green-main: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.4);
       --red-main: #f43f5e;
+      --red-glow: rgba(244, 63, 94, 0.4);
       --hazard-main: #f59e0b;
+      --hazard-glow: rgba(245, 158, 11, 0.4);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     
     body {
       background-color: var(--bg-main);
-      background-image: 
-        linear-gradient(rgba(0, 243, 255, 0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 243, 255, 0.015) 1px, transparent 1px),
-        radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.06) 0%, transparent 70%);
-      background-size: 30px 30px, 30px 30px, 100% 100%;
+      background-image: radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.04) 0%, transparent 60%);
       color: var(--text-main);
       min-height: 100vh;
-      padding: 20px;
       display: flex;
       flex-direction: column;
-      align-items: center;
     }
 
-    .container { width: 100%; max-width: 980px; display: flex; flex-direction: column; gap: 16px; }
-    
-    /* Header Estilo HUD */
-    header {
+    /* Barra de Navegación Superior */
+    nav.top-nav {
+      background-color: var(--bg-nav);
+      border-bottom: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 12px;
+      padding: 12px 24px;
       flex-wrap: wrap;
-      gap: 12px;
-      position: relative;
-    }
-    header::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 0;
-      width: 140px;
-      height: 2px;
-      background: var(--cyan-main);
-      box-shadow: 0 0 12px var(--cyan-main);
+      gap: 15px;
     }
 
-    .header-left { display: flex; flex-direction: column; gap: 3px; }
-    .tactical-system { font-size: 0.68rem; font-weight: 700; color: var(--cyan-main); letter-spacing: 2.5px; text-transform: uppercase; text-shadow: 0 0 8px var(--cyan-glow); }
-    .tactical-title { font-size: 1.35rem; font-weight: 800; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
-    .tactical-subtitle { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.5px; }
-    
-    .server-badge {
-      background: linear-gradient(135deg, rgba(0, 243, 255, 0.08), rgba(14, 165, 233, 0.15));
-      border: 1px solid var(--cyan-main);
-      color: var(--cyan-main);
-      font-weight: 800;
-      font-size: 0.82rem;
-      padding: 6px 14px;
-      border-radius: 4px;
-      letter-spacing: 1.5px;
-      box-shadow: 0 0 15px rgba(0, 243, 255, 0.12);
+    .nav-brand {
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
-      text-shadow: 0 0 5px var(--cyan-glow);
+      gap: 2px;
     }
-    .server-badge span { font-size: 0.58rem; font-weight: 600; color: var(--text-main); opacity: 0.8; letter-spacing: 1px; text-shadow: none; }
+    .nav-logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--cyan-main);
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px var(--cyan-glow);
+    }
+    .nav-sub {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
 
-    /* Tarjeta Principal HUD */
-    .main-card {
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      border-color: var(--text-muted);
+    }
+    .nav-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+    }
+
+    .lang-selector {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Contenedor Principal */
+    .main-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      flex: 1;
+    }
+
+    /* Cabecera de Sección */
+    .section-header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .section-title span { color: var(--green-main); text-shadow: 0 0 15px var(--green-glow); }
+    .section-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* Tarjeta Principal de Monitorización */
+    .monitor-card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8), inset 0 0 25px rgba(0, 243, 255, 0.015);
+      border-radius: 12px;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 24px;
+      align-items: center;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
       position: relative;
       overflow: hidden;
     }
-    .main-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--cyan-main), transparent);
-      box-shadow: 0 0 10px var(--cyan-main);
+    @media(max-width: 900px) {
+      .monitor-card { grid-template-columns: 1fr; }
     }
 
-    .phase-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    /* Columna Izquierda: Fase Actual */
+    .phase-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
     
-    .phase-badge {
-      padding: 5px 12px;
-      border-radius: 4px;
-      font-weight: 700;
+    .phase-badge-box {
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .phase-badge-box.prep {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.18), rgba(244, 63, 94, 0.05));
+      border: 1px solid rgba(244, 63, 94, 0.5);
+      color: var(--red-main);
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.15);
+    }
+    .phase-badge-box.active {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(16, 185, 129, 0.05));
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      color: var(--green-main);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+    }
+    .phase-badge-box.hazard {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.05));
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      color: var(--hazard-main);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+    }
+    .phase-subtext {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-main);
+      opacity: 0.85;
+      letter-spacing: 0.3px;
+    }
+    
+    .next-phase-info {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Columna Derecha: Reloj Grande */
+    .clock-column {
+      background: rgba(2, 6, 23, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .clock-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 1.5px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      color: var(--text-muted);
+      font-weight: 700;
     }
-    .phase-badge.prep { background: rgba(244, 63, 94, 0.12); color: var(--red-main); border: 1px solid rgba(244, 63, 94, 0.4); box-shadow: 0 0 10px rgba(244, 63, 94, 0.2); }
-    .phase-badge.active { background: rgba(16, 185, 129, 0.12); color: var(--green-main); border: 1px solid rgba(16, 185, 129, 0.4); box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
-    .phase-badge.hazard { background: rgba(245, 158, 11, 0.12); color: var(--hazard-main); border: 1px solid rgba(245, 158, 11, 0.4); box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
-    
-    /* Bloque de Reloj Central */
-    .clock-container {
+    .timer-digits {
+      font-size: 3.2rem;
+      font-weight: 800;
+      font-family: 'Courier New', Courier, monospace;
+      letter-spacing: 3px;
+      color: var(--red-main);
+      text-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
+      line-height: 1.1;
+    }
+    .clock-column.active-mode .timer-digits {
+      color: var(--green-main);
+      text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+    .clock-column.hazard-mode .timer-digits {
+      color: var(--hazard-main);
+      text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    }
+
+    .clock-footer-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(2, 6, 23, 0.75);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 18px 22px;
-      flex-wrap: wrap;
-      gap: 15px;
-      position: relative;
+      font-size: 0.78rem;
+      margin-top: 4px;
     }
-    .clock-container::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; width: 4px; height: 100%;
-      background: var(--cyan-main);
-      box-shadow: 0 0 8px var(--cyan-main);
+    .target-time-display {
+      color: var(--cyan-main);
+      font-weight: 700;
+      font-family: monospace;
+      font-size: 0.95rem;
     }
-    
-    .clock-box { display: flex; flex-direction: column; gap: 3px; }
-    .clock-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
-    .timer-digits { font-size: 2.8rem; font-weight: 800; font-family: 'Courier New', Courier, monospace; letter-spacing: 2.5px; color: var(--red-main); text-shadow: 0 0 15px rgba(244, 63, 94, 0.4); }
-    .clock-box.active-mode .timer-digits { color: var(--green-main); text-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
-    .clock-box.hazard-mode .timer-digits { color: var(--hazard-main); text-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
-    
-    .target-box { text-align: right; display: flex; flex-direction: column; gap: 3px; }
-    .target-time-label { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
-    .target-time { font-size: 1.4rem; font-weight: 700; color: var(--cyan-main); font-family: monospace; text-shadow: 0 0 8px var(--cyan-glow); }
+    .beta-badge {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #60a5fa;
+      font-size: 0.62rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
 
-    /* Barra de Progreso */
-    .progress-container { display: flex; flex-direction: column; gap: 6px; }
-    .progress-info { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); flex-wrap: wrap; gap: 5px; font-weight: 500; }
-    .progress-bar-bg { width: 100%; height: 6px; background: rgba(0, 0, 0, 0.5); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-color); }
-    .progress-bar-fill { height: 100%; width: 0%; transition: width 0.5s ease; box-shadow: 0 0 10px currentColor; }
-
-    /* Sección de LEDs Ópticos */
-    .leds-section { display: flex; flex-direction: column; gap: 10px; }
-    .section-title { font-size: 0.75rem; font-weight: 700; color: var(--cyan-main); text-transform: uppercase; letter-spacing: 1.5px; text-shadow: 0 0 6px rgba(0,243,255,0.2); }
-    
-    .leds-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
-    .led-item {
-      background: rgba(2, 6, 23, 0.5);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 14px 8px;
+    /* Barra de Progreso Interna */
+    .progress-wrapper {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      text-align: center;
-      transition: all 0.3s ease;
+      gap: 5px;
+      margin-top: 4px;
     }
-    .led-item.green { border-color: rgba(16, 185, 129, 0.5); background: rgba(16, 185, 129, 0.04); }
-    .led-item.red { border-color: rgba(244, 63, 94, 0.5); background: rgba(244, 63, 94, 0.04); }
-    .led-item.hazard { border-color: rgba(245, 158, 11, 0.5); background: rgba(245, 158, 11, 0.04); }
-    
-    .led-indicator { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 12px currentColor; transition: all 0.3s; margin-bottom: 2px; }
-    .led-item.red .led-indicator { background: var(--red-main); color: var(--red-main); }
-    .led-item.green .led-indicator { background: var(--green-main); color: var(--green-main); }
-    .led-item.off .led-indicator { background: #1e293b; color: #1e293b; box-shadow: none; }
-    .led-item.hazard .led-indicator { background: var(--hazard-main); color: var(--hazard-main); }
-    
-    .led-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; color: var(--text-main); }
-    .led-status { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-    .led-countdown { font-size: 0.72rem; font-family: monospace; color: var(--cyan-main); letter-spacing: 0.5px; }
+    .progress-bar-bg {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.5s ease;
+      box-shadow: 0 0 10px currentColor;
+    }
 
-    /* Ventanas Horarias */
-    .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
-    .schedule-card {
+    /* Sección de Luces LED Estilo Sirena */
+    .leds-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    }
+    .leds-title-box {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .leds-heading {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: 0.5px;
+    }
+    .leds-subheading {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .leds-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 15px;
+    }
+
+    .led-box {
       background: rgba(2, 6, 23, 0.6);
       border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 14px;
+      border-radius: 10px;
+      padding: 18px 12px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      transition: border-color 0.2s;
+      align-items: center;
+      gap: 10px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
     }
-    .schedule-card:hover { border-color: var(--cyan-main); }
-    .schedule-header { display: flex; justify-content: space-between; align-items: center; }
-    .schedule-tag { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); letter-spacing: 1px; }
-    .schedule-date-badge { font-size: 0.62rem; padding: 2px 6px; border-radius: 3px; background: rgba(244,63,68,0.15); color: var(--red-main); font-weight: 700; }
-    .schedule-window { font-size: 1.05rem; font-weight: 800; color: #fff; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 6px rgba(0,243,255,0.2); }
-    .schedule-eta { font-size: 0.7rem; color: var(--text-muted); }
 
-    /* Botonera y Panel de Admin */
-    .toolbar {
+    /* Estilo Sirena / Baliza LED con Animación */
+    .siren-beacon {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .siren-beacon::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px dashed currentColor;
+      animation: beaconRotate 4s linear infinite;
+      opacity: 0.6;
+    }
+
+    @keyframes beaconRotate {
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes sirenPulse {
+      0% { transform: scale(1); box-shadow: 0 0 10px currentColor, inset 0 0 10px currentColor; }
+      50% { transform: scale(1.08); box-shadow: 0 0 25px currentColor, inset 0 0 18px currentColor; filter: brightness(1.3); }
+      100% { transform: scale(1); box-shadow: 0 0 10px currentColor, inset 0 0 10px currentColor; }
+    }
+
+    .led-box.green .siren-beacon {
+      background: radial-gradient(circle, #34d399 0%, #059669 100%);
+      color: var(--green-main);
+      animation: sirenPulse 1.4s infinite ease-in-out;
+    }
+    .led-box.green {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.03);
+    }
+
+    .led-box.red .siren-beacon {
+      background: radial-gradient(circle, #fb7185 0%, #e11d48 100%);
+      color: var(--red-main);
+      animation: sirenPulse 0.9s infinite ease-in-out;
+    }
+    .led-box.red {
+      border-color: rgba(244, 63, 94, 0.4);
+      background: rgba(244, 63, 94, 0.03);
+    }
+
+    .led-box.hazard .siren-beacon {
+      background: radial-gradient(circle, #fbbf24 0%, #d97706 100%);
+      color: var(--hazard-main);
+      animation: sirenPulse 0.7s infinite ease-in-out;
+    }
+    .led-box.hazard {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: rgba(245, 158, 11, 0.03);
+    }
+
+    .led-box.off .siren-beacon {
+      background: #1e293b;
+      color: #475569;
+      box-shadow: none;
+    }
+    .led-box.off .siren-beacon::before { display: none; }
+    .led-box.off {
+      border-color: var(--border-color);
+      opacity: 0.7;
+    }
+
+    .siren-icon {
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .led-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--text-main);
+    }
+    .led-status {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .led-box.green .led-status { color: var(--green-main); }
+    .led-box.red .led-status { color: var(--red-main); }
+    .led-box.hazard .led-status { color: var(--hazard-main); }
+    .led-box.off .led-status { color: var(--text-muted); }
+
+    .led-countdown {
+      font-size: 0.72rem;
+      font-family: monospace;
+      color: var(--cyan-main);
+      font-weight: 600;
+    }
+
+    .leds-footer-desc {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-color);
+      padding-top: 12px;
+      letter-spacing: 0.3px;
+    }
+    .leds-footer-desc span { color: var(--green-main); font-weight: 700; }
+
+    /* Barra de Herramientas */
+    .toolbar-container {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 2px;
+      gap: 12px;
     }
-    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .btn {
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .action-btn {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       color: var(--text-main);
-      padding: 7px 14px;
-      border-radius: 4px;
+      padding: 10px 18px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 0.72rem;
-      font-weight: 600;
+      font-size: 0.78rem;
+      font-weight: 700;
       letter-spacing: 0.5px;
       transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       text-transform: uppercase;
     }
-    .btn:hover {
+    .action-btn:hover {
       background: var(--bg-card-hover);
       border-color: var(--cyan-main);
       color: var(--cyan-main);
-      box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.2);
     }
-    .btn.active {
+    .action-btn.active {
       background: rgba(0, 243, 255, 0.12);
       border-color: var(--cyan-main);
       color: var(--cyan-main);
-      box-shadow: 0 0 12px rgba(0, 243, 255, 0.3);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
     }
 
-    .admin-panel {
-      display: none;
-      background: rgba(244, 63, 94, 0.04);
-      border: 1px dashed rgba(244, 63, 94, 0.4);
-      border-radius: 6px;
-      padding: 14px;
-      margin-top: 5px;
-      gap: 10px;
-      flex-direction: column;
-    }
-    .admin-panel.active { display: flex; }
-    .admin-controls { display: flex; gap: 10px; flex-wrap: wrap; }
-    
-    /* Footer */
-    footer {
-      margin-top: 2px;
-      font-size: 0.7rem;
+    .precision-note {
+      font-size: 0.75rem;
       color: var(--text-muted);
-      text-align: center;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
+      gap: 6px;
+    }
+    .precision-note b { color: var(--hazard-main); }
+
+    footer {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      padding: 20px;
       border-top: 1px solid var(--border-color);
-      padding-top: 12px;
+      margin-top: auto;
       letter-spacing: 0.5px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="header-left">
-        <span class="tactical-system">★ SISTEMA TÁCTICO EXECUTIVE HANGARS • ONLINE</span>
-        <h1 class="tactical-title">MONITOR DE HANGARES EJECUTIVOS</h1>
-        <div class="tactical-subtitle">Ciclo global sincronizado de 185 min (3h 05m) · Panel Óptico de 5 Canales</div>
-      </div>
-      <div class="header-right">
-        <div class="server-badge">
-          ESPAÑA2942
-          <span>CREADO POR ERYNDAL</span>
-        </div>
-      </div>
-    </header>
 
-    <div class="main-card">
-      <div class="phase-header">
-        <div>
-          <h2 id="phaseTitle" style="font-size: 1.1rem; font-weight: 800; letter-spacing: 1px; color: #fff;">CARGANDO SISTEMAS...</h2>
-          <div id="phaseDesc" style="font-size: 0.75rem; color: var(--text-muted);">Estableciendo enlace seguro con la red orbital...</div>
-        </div>
-        <div id="phaseBadge" class="phase-badge prep">ESTADO</div>
-      </div>
+  <!-- Barra de Navegación -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <div class="nav-logo">CZ Timer</div>
+      <div class="nav-sub">Rastreador de Hangar de Star Citizen</div>
+    </div>
+    <div class="nav-links">
+      <button class="nav-btn">🛡️ Panel</button>
+      <button class="nav-btn active">🚀 Hangares Ejecutivos</button>
+      <button class="nav-btn">⚔️ Zonas Disputadas</button>
+    </div>
+    <div class="lang-selector">
+      🌐 ES Español
+    </div>
+  </nav>
 
-      <div class="clock-container">
-        <div id="clockBox" class="clock-box">
-          <span id="clockLabel" class="clock-label">TIEMPO HASTA APERTURA</span>
-          <span id="timerDigits" class="timer-digits">--:--:--</span>
-        </div>
-        <div class="target-box">
-          <div id="targetTimeLabel" class="target-time-label">⏰ Abre a las</div>
-          <div id="targetTime" class="target-time">--:--</div>
-        </div>
+  <!-- Contenedor Principal -->
+  <div class="main-container">
+    
+    <div class="section-header">
+      <h1 class="section-title">
+        🚀 Estado del Hangar Ejecutivo
+      </h1>
+      <div class="section-subtitle">
+        🌐 Ciclo Global PYAM-EXHANG • Sincronizado en Todos los Servidores • <b>ES2942</b>
       </div>
+    </div>
 
-      <div class="progress-container">
-        <div class="progress-info">
-          <span id="progressStepText">Calculando hitos tácticos...</span>
-          <span id="progressPercentText">Progreso: 0%</span>
+    <!-- Monitor Principal -->
+    <div class="monitor-card">
+      <div class="phase-column">
+        <div id="phaseBadgeBox" class="phase-badge-box prep">
+          <span id="phaseTitleMain">FASE ROJA (CARGANDO)</span>
+          <span id="phaseDescMain" class="phase-subtext">Hangar Cerrado - Carga de sistemas (120 min)</span>
         </div>
-        <div class="progress-bar-bg">
-          <div id="progressBarFill" class="progress-bar-fill"></div>
-        </div>
-        <div id="nextPhaseText" style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">Siguiente fase: --</div>
-      </div>
-
-      <div class="leds-section">
-        <div class="section-title">Indicadores Ópticos (Panel Frontal de 5 Canales)</div>
-        <div class="leds-grid" id="ledsGridContainer">
-          <div class="led-item" id="ledItem1">
-            <div class="led-indicator"></div>
-            <div class="led-title">LUZ 1</div>
-            <div class="led-status" id="led1Status">ESPERA</div>
-            <div class="led-countdown" id="led1Countdown">--:--:--</div>
+        <div id="nextPhaseText" class="next-phase-info">Siguiente: FASE VERDE (Abierto 60 min)</div>
+        
+        <div class="progress-wrapper">
+          <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted);">
+            <span id="progressStepText">Calculando hitos tácticos...</span>
+            <span id="progressPercentText">Progreso del Ciclo: 0%</span>
           </div>
-          <div class="led-item" id="ledItem2">
-            <div class="led-indicator"></div>
-            <div class="led-title">LUZ 2</div>
-            <div class="led-status" id="led2Status">ESPERA</div>
-            <div class="led-countdown" id="led2Countdown">--:--:--</div>
-          </div>
-          <div class="led-item" id="ledItem3">
-            <div class="led-indicator"></div>
-            <div class="led-title">LUZ 3</div>
-            <div class="led-status" id="led3Status">ESPERA</div>
-            <div class="led-countdown" id="led3Countdown">--:--:--</div>
-          </div>
-          <div class="led-item" id="ledItem4">
-            <div class="led-indicator"></div>
-            <div class="led-title">LUZ 4</div>
-            <div class="led-status" id="led4Status">ESPERA</div>
-            <div class="led-countdown" id="led4Countdown">--:--:--</div>
-          </div>
-          <div class="led-item" id="ledItem5">
-            <div class="led-indicator"></div>
-            <div class="led-title">LUZ 5</div>
-            <div class="led-status" id="led5Status">ESPERA</div>
-            <div class="led-countdown" id="led5Countdown">--:--:--</div>
+          <div class="progress-bar-bg">
+            <div id="progressBarFill" class="progress-bar-fill"></div>
           </div>
         </div>
       </div>
 
-      <div class="leds-section" style="margin-top: 2px;">
-        <div class="section-title">Próximas Ventanas de Apertura (Fase Verde)</div>
-        <div class="schedule-grid" id="scheduleGrid"></div>
-      </div>
-
-      <div class="toolbar">
-        <div class="btn-group">
-          <button id="audioToggleBtn" class="btn">🔕 Alertas Sonoras: OFF</button>
-          <button id="notifToggleBtn" class="btn">🔕 Notificaciones Push: OFF</button>
+      <div id="clockColumn" class="clock-column">
+        <div class="clock-header-row">
+          <span id="clockLabel">Tiempo Hasta Apertura</span>
+          <span>Sincronización Activa</span>
         </div>
-        <button id="toggleAdminBtn" class="btn" style="opacity: 0.3;" title="Modo Admin">⚙️</button>
-      </div>
-
-      <div id="adminPanel" class="admin-panel">
-        <div style="font-size: 0.75rem; font-weight: bold; color: var(--red-main); letter-spacing: 0.5px;">Panel de Control de Administrador (Sincronización Global Firebase)</div>
-        <div class="admin-controls">
-          <button id="manualSyncBtn" class="btn" style="background:var(--red-main); color:white; border:none;">Sincronizar Manualmente (Fase y Hora)</button>
-          <button id="resetBtn" class="btn">Restablecer Offset a 0</button>
+        <div id="timerDigits" class="timer-digits">--:--:--</div>
+        <div class="clock-footer-row">
+          <div>
+            <span id="targetTimeLabel" style="color: var(--text-muted); font-size: 0.75rem;">⏰ Abre a las:</span> 
+            <span id="targetTime" class="target-time-display">--:--</span>
+          </div>
+          <span class="beta-badge">BETA ES2942</span>
         </div>
       </div>
     </div>
 
-    <footer>
-      <span>Zona horaria: <span id="userTimezone">UTC</span></span>
-      <span>Star Citizen · Sistema de Control de Hangares Ejecutivos</span>
-    </footer>
+    <!-- Tarjeta de Luces LED Estilo Sirena -->
+    <div class="leds-card">
+      <div class="leds-title-box">
+        <h2 class="leds-heading">Luces de Estado del Hangar</h2>
+        <div class="leds-subheading">Indicadores LED tipo baliza estroboscópica en tiempo real</div>
+      </div>
+
+      <div class="leds-grid" id="ledsGridContainer">
+        <div class="led-box" id="ledItem1">
+          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
+          <div class="led-title">LED 1</div>
+          <div class="led-status" id="led1Status">CERRADO</div>
+          <div class="led-countdown" id="led1Countdown">--:--:--</div>
+        </div>
+        <div class="led-box" id="ledItem2">
+          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
+          <div class="led-title">LED 2</div>
+          <div class="led-status" id="led2Status">CERRADO</div>
+          <div class="led-countdown" id="led2Countdown">--:--:--</div>
+        </div>
+        <div class="led-box" id="ledItem3">
+          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
+          <div class="led-title">LED 3</div>
+          <div class="led-status" id="led3Status">CERRADO</div>
+          <div class="led-countdown" id="led3Countdown">--:--:--</div>
+        </div>
+        <div class="led-box" id="ledItem4">
+          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
+          <div class="led-title">LED 4</div>
+          <div class="led-status" id="led4Status">CERRADO</div>
+          <div class="led-countdown" id="led4Countdown">--:--:--</div>
+        </div>
+        <div class="led-box" id="ledItem5">
+          <div class="siren-beacon"><span class="siren-icon">✕</span></div>
+          <div class="led-title">LED 5</div>
+          <div class="led-status" id="led5Status">CERRADO</div>
+          <div class="led-countdown" id="led5Countdown">--:--:--</div>
+        </div>
+      </div>
+
+      <div class="leds-footer-desc">
+        Las luces se vuelven <span>VERDES</span> durante la fase de encendido • Se apagan durante el apagado • Todas apagadas = hangar cerrado.
+      </div>
+    </div>
+
+    <!-- Barra de Herramientas -->
+    <div class="toolbar-container">
+      <div class="btn-group">
+        <button id="audioToggleBtn" class="action-btn">🔕 Alertas IA: OFF</button>
+        <button id="manualSyncBtn" class="action-btn">⚡ Sincronizar Temporizador</button>
+        <button id="resetBtn" class="action-btn">🔄 Restablecer</button>
+      </div>
+      <div class="precision-note">
+        ⚡ <b>Temporización de Precisión:</b> Sincroniza cuando veas el cambio del hangar en el juego (ES2942).
+      </div>
+    </div>
+
   </div>
+
+  <footer>
+    Star Citizen · Sistema de Control de Hangares Ejecutivos (ES2942) · Creado por Eryndal
+  </footer>
 
   <script>
     const firebaseConfig = {
@@ -412,8 +683,8 @@
 
     const PREP_DURATION = 120 * 60 * 1000;   // 120 min (Fase Roja)
     const ACTIVE_DURATION = 60 * 60 * 1000;  // 60 min (Fase Verde)
-    const HAZARD_DURATION = 5 * 60 * 1000;   // 5 min (Evacuación / Gracia)
-    const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION; // 185 min (3h 05m)
+    const HAZARD_DURATION = 5 * 60 * 1000;   // 5 min (Evacuación)
+    const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION;
 
     const NUM_LEDS = 5;
     const PREP_STEP = PREP_DURATION / NUM_LEDS;     
@@ -423,17 +694,14 @@
     let adminCustomOffset = 0;
     let fetchedClockOffset = 0; 
     let firebaseLoaded = false;
-
-    let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
-    let notifEnabled = localStorage.getItem('hangar_sc_notif') === 'true';
     let currentPhase = ''; 
 
-    const phaseBadge = document.getElementById('phaseBadge');
-    const phaseTitle = document.getElementById('phaseTitle');
-    const phaseDesc = document.getElementById('phaseDesc');
+    const phaseBadgeBox = document.getElementById('phaseBadgeBox');
+    const phaseTitleMain = document.getElementById('phaseTitleMain');
+    const phaseDescMain = document.getElementById('phaseDescMain');
     const nextPhaseText = document.getElementById('nextPhaseText');
-    const clockBox = document.getElementById('clockBox');
+    const clockColumn = document.getElementById('clockColumn');
     const clockLabel = document.getElementById('clockLabel');
     const timerDigits = document.getElementById('timerDigits');
     const targetTimeLabel = document.getElementById('targetTimeLabel');
@@ -441,14 +709,7 @@
     const progressStepText = document.getElementById('progressStepText');
     const progressPercentText = document.getElementById('progressPercentText');
     const progressBarFill = document.getElementById('progressBarFill');
-    const scheduleGrid = document.getElementById('scheduleGrid');
     const audioToggleBtn = document.getElementById('audioToggleBtn');
-    const notifToggleBtn = document.getElementById('notifToggleBtn');
-    const userTimezoneEl = document.getElementById('userTimezone');
-
-    try {
-      userTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    } catch(e) {}
 
     dbRef.on('value', (snapshot) => {
       firebaseLoaded = true;
@@ -456,83 +717,17 @@
       adminCustomOffset = (val !== null) ? val : 0;
       updateHangarState();
     }, (error) => {
-      console.warn("Aviso de Firebase (usando modo local):", error);
-      if (!firebaseLoaded) {
-        adminCustomOffset = 0;
-        updateHangarState();
-      }
+      if (!firebaseLoaded) { adminCustomOffset = 0; updateHangarState(); }
     });
 
     setTimeout(() => {
-      if (!firebaseLoaded) {
-        console.warn("Timeout de Firebase. Forzando inicio local...");
-        updateHangarState();
-      }
+      if (!firebaseLoaded) updateHangarState();
     }, 1500);
-
-    function updateNotifButtonUI() {
-      if (notifEnabled) {
-        notifToggleBtn.className = 'btn active';
-        notifToggleBtn.textContent = '🔔 Notificaciones Push: ON';
-      } else {
-        notifToggleBtn.className = 'btn';
-        notifToggleBtn.textContent = '🔕 Notificaciones Push: OFF';
-      }
-    }
-
-    async function requestDesktopNotification() {
-      if (!('Notification' in window)) { notifEnabled = false; updateNotifButtonUI(); return; }
-      if (Notification.permission === 'granted') { notifEnabled = true; }
-      else if (Notification.permission !== 'denied') {
-        const permission = await Notification.requestPermission();
-        notifEnabled = (permission === 'granted');
-      }
-      localStorage.setItem('hangar_sc_notif', notifEnabled);
-      updateNotifButtonUI();
-    }
-
-    function sendDesktopNotification(title, body) {
-      if (!notifEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
-      try { new Notification(title, { body: body }); } catch(e) {}
-    }
-
-    notifToggleBtn.addEventListener('click', async () => {
-      if (!notifEnabled) await requestDesktopNotification();
-      else { notifEnabled = false; localStorage.setItem('hangar_sc_notif', 'false'); updateNotifButtonUI(); }
-    });
-    updateNotifButtonUI();
 
     let audioCtx = null;
     function initAudioContext() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
-    }
-
-    function playSound(type) {
-      if (!audioEnabled) return;
-      initAudioContext();
-      if (!audioCtx) return;
-      const now = audioCtx.currentTime;
-      if (type === 'light') {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.frequency.setValueAtTime(587.33, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(now); osc.stop(now + 0.35);
-      } else if (type === 'open') {
-        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-          gain.gain.setValueAtTime(0.15, now + idx * 0.08);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
-          osc.connect(gain); gain.connect(audioCtx.destination);
-          osc.start(now + idx * 0.08); osc.stop(now + idx * 0.08 + 0.3);
-        });
-      }
     }
 
     function speakText(text) {
@@ -541,18 +736,18 @@
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'es-ES';
-        utterance.rate = 0.95;
+        utterance.rate = 0.98;
         window.speechSynthesis.speak(utterance);
       }
     }
 
     function updateAudioButtonUI() {
       if (audioEnabled) {
-        audioToggleBtn.className = 'btn active';
-        audioToggleBtn.textContent = '🔔 Alertas Sonoras: ON';
+        audioToggleBtn.className = 'action-btn active';
+        audioToggleBtn.textContent = '🔊 Alertas IA: ON';
       } else {
-        audioToggleBtn.className = 'btn';
-        audioToggleBtn.textContent = '🔕 Alertas Sonoras: OFF';
+        audioToggleBtn.className = 'action-btn';
+        audioToggleBtn.textContent = '🔕 Alertas IA: OFF';
       }
     }
 
@@ -560,7 +755,7 @@
       audioEnabled = !audioEnabled;
       localStorage.setItem('hangar_sc_audio', audioEnabled);
       updateAudioButtonUI();
-      if (audioEnabled) { initAudioContext(); playSound('light'); speakText('Alertas activadas'); }
+      if (audioEnabled) { initAudioContext(); speakText('Asistente de voz IA activado para hangares ejecutivos'); }
     });
     updateAudioButtonUI();
 
@@ -569,78 +764,96 @@
       const nowAdjusted = trueNow + adminCustomOffset;
       const cycleElapsed = nowAdjusted % TOTAL_CYCLE;
 
+      let statusLabelForTab = "";
+
       if (cycleElapsed < PREP_DURATION) {
         const timeLeft = PREP_DURATION - cycleElapsed;
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((cycleElapsed / PREP_DURATION) * 100);
 
-        phaseBadge.className = 'phase-badge prep';
-        phaseTitle.textContent = (timeLeft <= WARN_THRESHOLD) ? 'PRÓXIMO A ABRIRSE' : 'FASE ROJA (CARGANDO)';
-        phaseDesc.textContent = 'Hangar Cerrado · Carga de sistemas (120 min)';
+        if (currentPhase !== 'PREP' && currentPhase !== '') {
+          speakText('Atención Eryndal. Fase roja iniciada. Hangar cerrando sistemas.');
+        }
+        currentPhase = 'PREP';
+
+        // Definición de estado limpio para la pestaña del navegador
+        if (timeLeft <= WARN_THRESHOLD) {
+          statusLabelForTab = "Próximo a abrirse";
+        } else {
+          statusLabelForTab = "Cerrado";
+        }
+
+        phaseBadgeBox.className = 'phase-badge-box prep';
+        phaseTitleMain.textContent = (timeLeft <= WARN_THRESHOLD) ? 'PRÓXIMO A ABRIRSE' : 'FASE ROJA (CARGANDO)';
+        phaseDescMain.textContent = 'Hangar Cerrado · Carga de sistemas (120 min)';
         nextPhaseText.textContent = 'Siguiente: FASE VERDE (Abierto 60 min)';
 
-        clockBox.className = 'clock-box';
+        clockColumn.className = 'clock-column';
         clockLabel.textContent = 'TIEMPO HASTA APERTURA';
         timerDigits.textContent = formattedTime;
-        targetTimeLabel.textContent = '⏰ Abre a las';
+        targetTimeLabel.textContent = '⏰ Abre a las:';
         targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
 
         const nextLightMs = PREP_STEP - (cycleElapsed % PREP_STEP);
-        progressStepText.textContent = `Próxima luz verde en: ${formatHHMMSS(nextLightMs)}`;
-        progressPercentText.textContent = `Progreso: ${percent}%`;
+        progressStepText.textContent = `Próxima baliza verde en: ${formatHHMMSS(nextLightMs)}`;
+        progressPercentText.textContent = `Progreso del Ciclo: ${percent}%`;
         progressBarFill.style.width = `${percent}%`;
         progressBarFill.style.background = 'var(--red-main)';
 
         updateLedsDetailed(cycleElapsed);
-        currentPhase = 'PREP';
 
       } else if (cycleElapsed < PREP_DURATION + ACTIVE_DURATION) {
-        if (currentPhase !== 'ACTIVE' && currentPhase !== '') {
-          playSound('open');
-          speakText('Apertura de hangar iniciada.');
-          sendDesktopNotification('🚀 Hangar Abierto', '¡Acceso concedido!');
+        if (currentPhase !== 'ACTIVE') {
+          speakText('¡Alerta ES2942! Hangar abierto. Fase verde activa.');
         }
+        currentPhase = 'ACTIVE';
+        statusLabelForTab = "Abierto";
 
         const activeElapsed = cycleElapsed - PREP_DURATION;
         const timeLeft = ACTIVE_DURATION - activeElapsed;
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((activeElapsed / ACTIVE_DURATION) * 100);
 
-        phaseBadge.className = 'phase-badge active';
-        phaseTitle.textContent = 'FASE VERDE (ABIERTO)';
-        phaseDesc.textContent = 'Hangar Abierto · Tiempo activo disponible';
+        phaseBadgeBox.className = 'phase-badge-box active';
+        phaseTitleMain.textContent = 'FASE VERDE (ABIERTO)';
+        phaseDescMain.textContent = 'Hangar Abierto · Acceso autorizado';
         nextPhaseText.textContent = 'Siguiente: EVACUACIÓN (5 min)';
 
-        clockBox.className = 'clock-box active-mode';
+        clockColumn.className = 'clock-column active-mode';
         clockLabel.textContent = 'TIEMPO HASTA CIERRE';
         timerDigits.textContent = formattedTime;
-        targetTimeLabel.textContent = '⏰ Cierra a las';
+        targetTimeLabel.textContent = '⏰ Cierra a las:';
         targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
 
         const nextLightOffMs = ACTIVE_STEP - (activeElapsed % ACTIVE_STEP);
-        progressStepText.textContent = `Siguiente luz se apaga en: ${formatHHMMSS(nextLightOffMs)}`;
+        progressStepText.textContent = `Siguiente baliza se apaga en: ${formatHHMMSS(nextLightOffMs)}`;
         progressPercentText.textContent = `Consumido: ${percent}%`;
         progressBarFill.style.width = `${percent}%`;
         progressBarFill.style.background = 'var(--green-main)';
 
         updateLedsDetailed(cycleElapsed);
-        currentPhase = 'ACTIVE';
 
       } else {
+        if (currentPhase !== 'HAZARD') {
+          speakText('¡Precaución! Período de gracia y evacuación en curso.');
+        }
+        currentPhase = 'HAZARD';
+        statusLabelForTab = "Evacuación";
+
         const hazardElapsed = cycleElapsed - (PREP_DURATION + ACTIVE_DURATION);
         const timeLeft = HAZARD_DURATION - hazardElapsed;
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((hazardElapsed / HAZARD_DURATION) * 100);
 
-        phaseBadge.className = 'phase-badge hazard';
-        phaseTitle.textContent = 'PERÍODO DE GRACIA / GAS';
-        phaseDesc.textContent = '¡EVACUACIÓN! Cierre completo';
+        phaseBadgeBox.className = 'phase-badge-box hazard';
+        phaseTitleMain.textContent = 'PERÍODO DE GRACIA / GAS';
+        phaseDescMain.textContent = '¡EVACUACIÓN INMINENTE!';
         nextPhaseText.textContent = 'Siguiente: REINICIO DE CICLO';
 
-        clockBox.className = 'clock-box hazard-mode';
+        clockColumn.className = 'clock-column hazard-mode';
         clockLabel.textContent = 'BLOQUEO EN';
         timerDigits.textContent = formattedTime;
-        targetTimeLabel.textContent = '⚠️ Bloqueo a las';
+        targetTimeLabel.textContent = '⚠️ Bloqueo a las:';
         targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
 
         progressStepText.textContent = '¡Evacuar el hangar de inmediato!';
@@ -649,10 +862,10 @@
         progressBarFill.style.background = 'var(--hazard-main)';
 
         updateLedsDetailed(cycleElapsed);
-        currentPhase = 'HAZARD';
       }
 
-      updateSchedule(nowAdjusted, cycleElapsed);
+      // Título de pestaña optimizado en tiempo real: [Estado] [Temporizador] | ES2942
+      document.title = `${statusLabelForTab} - ${timerDigits.textContent} | ES2942`;
     }
 
     function updateLedsDetailed(cycleElapsed) {
@@ -660,12 +873,26 @@
         const item = document.getElementById(`ledItem${i}`);
         const statusEl = document.getElementById(`led${i}Status`);
         const countdownEl = document.getElementById(`led${i}Countdown`);
+        const iconEl = item.querySelector('.siren-icon');
         const calc = getLightData(i, cycleElapsed);
 
-        if (calc.state === 'GREEN') { item.className = 'led-item green'; statusEl.textContent = 'ACTIVO'; }
-        else if (calc.state === 'PENDING') { item.className = 'led-item red'; statusEl.textContent = 'PENDIENTE'; }
-        else if (calc.state === 'OFF') { item.className = 'led-item off'; statusEl.textContent = 'CONSUMIDO'; }
-        else if (calc.state === 'HAZARD') { item.className = 'led-item hazard'; statusEl.textContent = 'PELIGRO'; }
+        if (calc.state === 'GREEN') {
+          item.className = 'led-box green';
+          statusEl.textContent = 'ACTIVO';
+          iconEl.textContent = '✓';
+        } else if (calc.state === 'PENDING') {
+          item.className = 'led-box red';
+          statusEl.textContent = 'PENDIENTE';
+          iconEl.textContent = '✕';
+        } else if (calc.state === 'OFF') {
+          item.className = 'led-box off';
+          statusEl.textContent = 'CERRADO';
+          iconEl.textContent = '✕';
+        } else if (calc.state === 'HAZARD') {
+          item.className = 'led-box hazard';
+          statusEl.textContent = 'PELIGRO';
+          iconEl.textContent = '⚠️';
+        }
 
         countdownEl.textContent = formatHHMMSS(calc.timeToNext);
       }
@@ -674,7 +901,6 @@
     function getLightData(i, cycleElapsed) {
       const hazardStartTime = PREP_DURATION + ACTIVE_DURATION;
       const cycleEnd = TOTAL_CYCLE;
-
       let state = 'PENDING';
       let nextMilestone = 0;
 
@@ -710,43 +936,6 @@
       return { state, timeToNext };
     }
 
-    function updateSchedule(nowAdjusted, cycleElapsed) {
-      const currentCycleStart = nowAdjusted - cycleElapsed; 
-      let firstFutureOpen = currentCycleStart + PREP_DURATION;
-      if (cycleElapsed >= PREP_DURATION) firstFutureOpen += TOTAL_CYCLE;
-
-      let html = '';
-      const todayDate = new Date(nowAdjusted).getDate();
-
-      for (let i = 0; i < 4; i++) {
-        const openMs = firstFutureOpen + (i * TOTAL_CYCLE);
-        const closeMs = openMs + ACTIVE_DURATION;
-        const msUntil = openMs - nowAdjusted;
-        const openDate = new Date(openMs);
-        const closeDate = new Date(closeMs);
-
-        const openStr = openDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const closeStr = closeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const isTomorrow = openDate.getDate() !== todayDate;
-        const dateTag = isTomorrow ? `<span class="schedule-date-badge">MAÑANA</span>` : `<span class="schedule-date-badge" style="background:rgba(16,185,129,0.15); color:var(--green-main);">HOY</span>`;
-
-        const hoursUntil = Math.floor(msUntil / (1000 * 60 * 60));
-        const minsUntil = Math.floor((msUntil % (1000 * 60 * 60)) / (1000 * 60));
-
-        html += `
-          <div class="schedule-card">
-            <div class="schedule-header">
-              <span class="schedule-tag">${i === 0 ? 'PRÓXIMA APERTURA' : `APERTURA +${i + 1}`}</span>
-              ${dateTag}
-            </div>
-            <div class="schedule-window">${openStr} - ${closeStr}</div>
-            <div class="schedule-eta">⏳ En ${hoursUntil}h ${minsUntil}m aprox.</div>
-          </div>
-        `;
-      }
-      scheduleGrid.innerHTML = html;
-    }
-
     function formatHHMMSS(ms) {
       const totalSec = Math.max(0, Math.floor(ms / 1000));
       return `${Math.floor(totalSec / 3600).toString().padStart(2, '0')}:${Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0')}:${(totalSec % 60).toString().padStart(2, '0')}`;
@@ -756,30 +945,10 @@
       return new Date(nowAdjusted + msRemaining).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    const toggleAdminBtn = document.getElementById('toggleAdminBtn');
-    const adminPanel = document.getElementById('adminPanel');
-
-    if (isAdminUnlocked) adminPanel.classList.add('active');
-
-    toggleAdminBtn.addEventListener('click', () => {
-      if (!isAdminUnlocked) {
-        const pass = prompt("Introduce la clave de Administrador:");
-        if (pass === "achupirla") {
-          isAdminUnlocked = true;
-          localStorage.setItem('hangar_sc_admin', 'true');
-          adminPanel.classList.add('active');
-        } else if (pass !== null) alert("Clave incorrecta.");
-      } else {
-        isAdminUnlocked = false;
-        localStorage.setItem('hangar_sc_admin', 'false');
-        adminPanel.classList.remove('active');
-      }
-    });
-
     document.getElementById('manualSyncBtn').addEventListener('click', () => {
-      const phaseInput = prompt("1 = FASE ROJA (120 min)\n2 = FASE VERDE (60 min)\n3 = PERÍODO GRACIA / PELIGRO (5 min)", "1");
+      const phaseInput = prompt("1 = FASE ROJA (120 min)\n2 = FASE VERDE (60 min)\n3 = PERÍODO GRACIA (5 min)", "1");
       if (!phaseInput) return;
-      const timeInput = prompt("Introduce el tiempo restante de la fase (HH:MM:SS):", "01:50:00");
+      const timeInput = prompt("Introduce el tiempo restante (HH:MM:SS):", "01:50:00");
       if (!timeInput) return;
       const parts = timeInput.trim().split(':');
       let totalMs = 0;
@@ -797,13 +966,13 @@
         const newOffset = adminCustomOffset + diff;
 
         dbRef.set(newOffset).catch(err => console.log("Escritura bloqueada:", err));
-        alert("¡Sincronización procesada y hora actualizada!");
+        alert("¡Sincronización procesada correctamente (ES2942)!");
       }
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
       dbRef.set(0).catch(err => console.log("Escritura bloqueada:", err));
-      alert('Sincronización restablecida.');
+      alert('Sincronización restablecida a 0.');
     });
 
     setInterval(updateHangarState, 1000);
