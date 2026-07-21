@@ -365,7 +365,7 @@
     </div>
 
     <footer class="footer-stats">
-      <div class="stat-pill"><span class="pulse-online"></span><span class="stat-label">OPERATIVOS EN LÍNEA:</span><span class="stat-value" id="onlineCount">1</span></div>
+      <div class="stat-pill"><span class="pulse-online"></span><span class="stat-label">ESTADO NUBE:</span><span class="stat-value" id="cloudStatusText">ESPERANDO ANCLAJE...</span></div>
       <div class="stat-divider">|</div>
       <div class="stat-pill"><span class="stat-label">ACCESOS:</span><span class="stat-value" id="visitsCount">---</span></div>
       <div class="stat-divider">|</div>
@@ -387,7 +387,6 @@
     firebase.initializeApp(firebaseConfig);
     const dbRef = firebase.database().ref('hangar_sc_cycle_start');
     
-    // Sincronización nativa de tiempo con el servidor de Firebase
     const offsetRef = firebase.database().ref('.info/serverTimeOffset');
     let utcServerOffset = 0;
     offsetRef.on('value', (snapshot) => {
@@ -405,8 +404,7 @@
     const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; 
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
-    // Valor local por defecto en caso de que la nube tarde un instante
-    let globalCycleStart = Date.now() - PREP_DURATION;
+    let globalCycleStart = null; // Inicialmente nulo para forzar lectura real de la nube
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
@@ -429,6 +427,7 @@
     const audioToggleBtn = document.getElementById('audioToggleBtn');
     const notifToggleBtn = document.getElementById('notifToggleBtn');
     const userTimezoneEl = document.getElementById('userTimezone');
+    const cloudStatusText = document.getElementById('cloudStatusText');
 
     try {
       userTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -438,25 +437,18 @@
       return Date.now() + utcServerOffset;
     }
 
-    // CORRECCIÓN DEFINITIVA: Solo leemos de la nube. NINGÚN usuario normal sobrescribe la base de datos al entrar.
-    dbRef.once('value').then((snapshot) => {
+    // LECTURA DE LA NUBE SIN ESCRITURA AUTOMÁTICA
+    dbRef.on('value', (snapshot) => {
       const val = snapshot.val();
       if (val !== null) {
         globalCycleStart = val;
+        cloudStatusText.textContent = "SINCRONIZADO";
+        cloudStatusText.style.color = "var(--green-main)";
+        updateHangarState();
+      } else {
+        cloudStatusText.textContent = "SIN ANCLAJE (USA PANEL ADMIN)";
+        cloudStatusText.style.color = "var(--hazard-main)";
       }
-      updateHangarState();
-
-      // Escuchar cambios en tiempo real ordenados por ti desde el panel de admin
-      dbRef.on('value', (snapshot) => {
-        const newVal = snapshot.val();
-        if (newVal !== null && newVal !== globalCycleStart) {
-          globalCycleStart = newVal;
-          updateHangarState();
-        }
-      });
-    }).catch((error) => {
-      console.warn("Aviso de Firebase:", error);
-      updateHangarState();
     });
 
     function updateNotifButtonUI() {
@@ -554,7 +546,12 @@
     updateAudioButtonUI();
 
     function updateHangarState() {
-      if (globalCycleStart === null) return;
+      if (globalCycleStart === null) {
+        timerDigits.textContent = "00:00:00";
+        phaseTitle.textContent = "ESPERANDO ANCLAJE";
+        phaseDesc.textContent = "Pulsa en ⚙ (abajo) y sincroniza para iniciar.";
+        return;
+      }
 
       const trueNow = getTrueCurrentTime();
       let elapsed = (trueNow - globalCycleStart) % TOTAL_CYCLE;
@@ -737,8 +734,7 @@
     function adjustCycleAnchor(ms) {
       if (globalCycleStart !== null) {
         globalCycleStart += ms;
-        updateHangarState(); 
-        dbRef.set(globalCycleStart); // Esto actualiza la nube para todos los usuarios en tiempo real
+        dbRef.set(globalCycleStart); 
       }
     }
 
@@ -781,9 +777,7 @@
         const trueNow = getTrueCurrentTime();
         const newCycleStart = trueNow - targetElapsed;
         
-        globalCycleStart = newCycleStart; 
-        updateHangarState();
-        dbRef.set(newCycleStart); // Actualiza la nube para que cualquier miembro lo vea al instante
+        dbRef.set(newCycleStart); 
         alert("¡Anclaje absoluto sincronizado en la nube para todos!");
       }
     });
@@ -791,9 +785,7 @@
     document.getElementById('resetBtn').addEventListener('click', () => {
       const trueNow = getTrueCurrentTime();
       const defaultStart = trueNow - (120 * 60 * 1000);
-      globalCycleStart = defaultStart; 
-      updateHangarState();
-      dbRef.set(defaultStart); // Actualiza la nube globalmente
+      dbRef.set(defaultStart); 
       alert('Anclaje restablecido en la nube.');
     });
 
