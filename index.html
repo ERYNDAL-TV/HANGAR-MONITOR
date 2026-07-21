@@ -388,7 +388,8 @@
     const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; 
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
-    let globalCycleStart = null;
+    // Respaldo local inmediato para que la pantalla NUNCA se quede en blanco o con guiones (--:--) si Firebase tarda en conectar
+    let globalCycleStart = Date.now() - PREP_DURATION;
     let utcServerOffset = 0;
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
@@ -434,16 +435,20 @@
       return Date.now() + utcServerOffset;
     }
 
-    // Escuchar el inicio exacto del ciclo en Firebase
+    // Renderizado inmediato local para evitar bloqueos visuales
+    updateHangarState();
+
+    // Sincronización en tiempo real con Firebase en segundo plano
     dbRef.on('value', (snapshot) => {
       const val = snapshot.val();
       if (val !== null) {
         globalCycleStart = val;
       } else {
-        globalCycleStart = getTrueCurrentTime() - (120 * 60 * 1000);
         dbRef.set(globalCycleStart);
       }
       updateHangarState();
+    }, (error) => {
+      console.warn("Aviso de Firebase (usando ciclo local):", error);
     });
 
     function updateNotifButtonUI() {
@@ -721,12 +726,11 @@
       return new Date(trueNow + msRemaining).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    // Actualización optimista local inmediata para que cambie al instante en pantalla
     function adjustCycleAnchor(ms) {
       if (globalCycleStart !== null) {
         globalCycleStart += ms;
-        updateHangarState(); // Refresca la interfaz de inmediato
-        dbRef.set(globalCycleStart); // Sincroniza en la nube
+        updateHangarState(); 
+        dbRef.set(globalCycleStart); 
       }
     }
 
@@ -769,9 +773,9 @@
         const trueNow = getTrueCurrentTime();
         const newCycleStart = trueNow - targetElapsed;
         
-        globalCycleStart = newCycleStart; // Actualización local inmediata
+        globalCycleStart = newCycleStart; 
         updateHangarState();
-        dbRef.set(newCycleStart); // Sincronización en la nube
+        dbRef.set(newCycleStart); 
         alert("¡Anclaje absoluto sincronizado!");
       }
     });
@@ -779,14 +783,13 @@
     document.getElementById('resetBtn').addEventListener('click', () => {
       const trueNow = getTrueCurrentTime();
       const defaultStart = trueNow - (120 * 60 * 1000);
-      globalCycleStart = defaultStart; // Actualización local inmediata
+      globalCycleStart = defaultStart; 
       updateHangarState();
       dbRef.set(defaultStart);
       alert('Anclaje restablecido.');
     });
 
     setInterval(updateHangarState, 1000);
-    updateHangarState();
   </script>
 </body>
 </html>
