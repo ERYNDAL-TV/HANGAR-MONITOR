@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SISTEMA TÁCTICO DE HANGARES · ESPAÑA2942</title>
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #050811;
+      --card-bg: rgba(11, 18, 32, 0.85);
+      --card-border: rgba(56, 189, 248, 0.15);
+      
+      --green-main: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.5);
+      --green-bg: rgba(16, 185, 129, 0.05);
+      
+      --red-main: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.5);
+      --red-bg: rgba(239, 68, 68, 0.05);
+
+      --hazard-main: #f59e0b;
+      --hazard-glow: rgba(245, 158, 11, 0.5);
+      --hazard-bg: rgba(245, 158, 11, 0.08);
+
+      --cyan-hud: #06b6d4;
+      --cyan-glow: rgba(6, 182, 212, 0.4);
+
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 24px 20px 36px 20px;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.08) 0%, transparent 65%),
+        linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1050px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ENCABEZADO TÁCTICO SLIM */
+    .header-tactical {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(7, 12, 24, 0.98) 100%);
+      border: 1px solid var(--card-border);
+      border-top: 3px solid var(--cyan-hud);
+      border-radius: 12px;
+      padding: 16px 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sys-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--cyan-hud);
+      letter-spacing: 1.5px;
+      font-weight: 700;
+    }
+
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--cyan-hud);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--cyan-hud);
+      animation: pulse-glow 1.5s infinite;
+    }
+
+    .tactical-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #ffffff;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .tactical-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.8px;
+      font-weight: 600;
+    }
+
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .org-tag {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid var(--hazard-main);
+      color: var(--hazard-main);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 800;
+      padding: 3px 12px;
+      border-radius: 4px;
+      letter-spacing: 2px;
+    }
+
+    .author-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: rgba(148, 163, 184, 0.5);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .author-tag span {
+      color: rgba(248, 250, 252, 0.8);
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .top-panel {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+    }
+
+    /* FASES */
+    .status-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .phase-badge {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 20px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .phase-badge.prep {
+      background: var(--red-bg);
+      border: 1px solid var(--red-main);
+      box-shadow: 0 0 20px var(--red-glow);
+    }
+
+    .phase-badge.active {
+      background: var(--green-bg);
+      border: 1px solid var(--green-main);
+      box-shadow: 0 0 20px var(--green-glow);
+    }
+
+    .phase-badge.hazard {
+      background: var(--hazard-bg);
+      border: 1px solid var(--hazard-main);
+      box-shadow: 0 0 25px var(--hazard-glow);
+    }
+
+    .phase-indicator-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .phase-badge.prep .phase-indicator-dot { background: var(--red-main); box-shadow: 0 0 12px var(--red-main); }
+    .phase-badge.active .phase-indicator-dot { background: var(--green-main); box-shadow: 0 0 12px var(--green-main); }
+    .phase-badge.hazard .phase-indicator-dot { background: var(--hazard-main); box-shadow: 0 0 12px var(--hazard-main); }
+
+    .phase-text h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    .phase-text p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .next-phase-text {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding-left: 4px;
+    }
+
+    /* RELOJ REGRESIVO */
+    .clock-box {
+      background: rgba(3, 7, 18, 0.95);
+      border: 2px solid var(--red-main);
+      border-radius: 12px;
+      padding: 16px 28px;
+      text-align: right;
+      box-shadow: 0 0 25px var(--red-glow);
+      min-width: 290px;
+    }
+
+    .clock-box.active-mode {
+      border-color: var(--green-main);
+      box-shadow: 0 0 25px var(--green-glow);
+    }
+
+    .clock-box.hazard-mode {
+      border-color: var(--hazard-main);
+      box-shadow: 0 0 30px var(--hazard-glow);
+    }
+
+    .clock-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--text-secondary);
+    }
+
+    .clock-digits {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.9rem;
+      font-weight: 800;
+      color: var(--red-main);
+      text-shadow: 0 0 20px var(--red-glow);
+      line-height: 1;
+      margin: 4px 0;
+    }
+
+    .clock-box.active-mode .clock-digits { color: var(--green-main); text-shadow: 0 0 20px var(--green-glow); }
+    .clock-box.hazard-mode .clock-digits { color: var(--hazard-main); text-shadow: 0 0 25px var(--hazard-glow); }
+
+    .clock-sub {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .target-time-badge {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* BARRA PROGRESO */
+    .progress-container { margin-top: 18px; }
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .progress-bar-bg {
+      width: 100%; height: 7px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; width: 0%;
+      background: var(--red-main);
+      transition: width 1s linear;
+    }
+
+    /* --- PANEL DE INDICADORES EN 3D (5 LUCES) --- */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+    }
+
+    .section-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .led-container-3d { 
+      display: flex; 
+      justify-content: space-around;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    .led-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 90px;
+    }
+
+    .led-orb {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      position: relative;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .led-orb::before {
+      content: '';
+      position: absolute;
+      top: 7%;
+      left: 18%;
+      width: 64%;
+      height: 38%;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 100%);
+      pointer-events: none;
+    }
+
+    .led-item-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+    }
+
+    .led-item-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    /* ESTADOS DE LAS LUCES */
+    .led-item.green .led-orb {
+      background: radial-gradient(circle at 35% 30%, #6ee7b7 0%, #10b981 50%, #047857 100%);
+      border: 3px solid #34d399;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(0, 60, 30, 0.7), 0 0 25px rgba(16, 185, 129, 0.65);
+      color: #ffffff;
+    }
+    .led-item.green .led-item-status { color: var(--green-main); }
+
+    .led-item.red .led-orb {
+      background: radial-gradient(circle at 35% 30%, #fca5a5 0%, #ef4444 50%, #b91c1c 100%);
+      border: 3px solid #f87171;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(60, 0, 0, 0.7), 0 0 25px rgba(239, 68, 68, 0.65);
+      color: #ffffff;
+    }
+    .led-item.red .led-item-status { color: var(--red-main); }
+
+    .led-item.hazard .led-orb {
+      background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
+      border: 3px solid #fbbf24;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(60, 40, 0, 0.7), 0 0 25px rgba(245, 158, 11, 0.65);
+      color: #ffffff;
+    }
+    .led-item.hazard .led-item-status { color: var(--hazard-main); }
+
+    .led-item.off .led-orb {
+      background: radial-gradient(circle at 35% 30%, #475569 0%, #1e293b 60%, #0f172a 100%);
+      border: 3px solid #334155;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5), inset 0 -4px 8px rgba(0, 0, 0, 0.8);
+      color: #64748b;
+    }
+    .led-item.off .led-item-status { color: #64748b; }
+
+    /* SCHEDULE */
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-top: 10px;
+    }
+
+    .schedule-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      border-left: 4px solid var(--green-main);
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+
+    .schedule-card:hover {
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(16, 185, 129, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .schedule-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .schedule-tag {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--cyan-hud);
+      letter-spacing: 1px;
+    }
+
+    .schedule-date-badge {
+      font-size: 0.68rem;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--cyan-hud);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .schedule-window {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    .schedule-eta {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* BOTONERA Y CONTROLES */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .btn-share {
+      background: #0284c7;
+      border-color: #0284c7;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+    }
+
+    .btn-audio {
+      background: rgba(15, 23, 42, 0.8);
+      border-color: rgba(148, 163, 184, 0.3);
+      color: var(--text-secondary);
+    }
+
+    .btn-audio.active {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--green-main);
+      color: var(--green-main);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-admin {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: var(--hazard-main);
+      color: var(--hazard-main);
+    }
+
+    .admin-panel {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px dashed var(--hazard-main);
+      border-radius: 12px;
+      padding: 18px 22px;
+      display: none;
+    }
+
+    .admin-panel.active { display: block; }
+
+    .admin-header {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.82rem;
+      color: var(--hazard-main);
+      margin-bottom: 12px;
+    }
+
+    .adjust-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .adjust-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      min-width: 110px;
+      font-weight: 700;
+    }
+
+    .quick-adjust-group { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .btn-adjust {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-adjust:hover { background: var(--cyan-hud); color: #000; border-color: var(--cyan-hud); }
+    .btn-adjust.minus { border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+    .btn-adjust.minus:hover { background: var(--red-main); color: #fff; border-color: var(--red-main); }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    @keyframes pulse-glow {
+      0% { opacity: 1; filter: drop-shadow(0 0 2px var(--cyan-hud)); }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; filter: drop-shadow(0 0 2px var(--cyan-hud)); }
+    }
+
+    @media (max-width: 768px) {
+      .header-tactical { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .header-right { align-items: flex-start; }
+      .top-panel { grid-template-columns: 1fr; }
+      .clock-box { text-align: center; min-width: auto; }
+      .clock-sub { justify-content: center; }
+      .led-container-3d { gap: 12px 6px; }
+      .led-orb { width: 60px; height: 60px; font-size: 1.3rem; }
+      .section-header { flex-direction: column; align-items: flex-start; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- HEADER TÁCTICO SLIM -->
+    <header class="header-tactical">
+      <div class="header-left">
+        <div class="sys-badge">
+          <span class="pulse-dot"></span>
+          SISTEMA TÁCTICO EXECUTIVE HANGARS · ONLINE
+        </div>
+        <h1 class="tactical-title">MONITOR DE HANGARES EJECUTIVOS</h1>
+        <div class="tactical-subtitle">Ciclo global sincronizado de 185 min (3h 05m) · 5 Indicadores Ópticos</div>
+      </div>
+
+      <div class="header-right">
+        <div class="org-tag">ESPAÑA2942</div>
+        <div class="author-tag">CREADO POR <span>ERYNDAL</span></div>
+      </div>
+    </header>
+
+    <!-- ESTADO PRINCIPAL Y CRONÓMETRO -->
+    <div class="card">
+      <div class="top-panel">
+        <div class="status-group">
+          <div class="phase-badge prep" id="phaseBadge">
+            <div class="phase-indicator-dot"></div>
+            <div class="phase-text">
+              <h2 id="phaseTitle">FASE ROJA</h2>
+              <p id="phaseDesc">Hangar Cerrado · Carga de Sistemas (120 min)</p>
+            </div>
+          </div>
+          <div class="next-phase-text" id="nextPhaseText">Siguiente: FASE VERDE (60 min abiertos)</div>
+        </div>
+
+        <div class="clock-box" id="clockBox">
+          <div class="clock-label" id="clockLabel">TIEMPO HASTA APERTURA</div>
+          <div class="clock-digits" id="timerDigits">02:00:00</div>
+          <div class="clock-sub">
+            <span id="targetTimeLabel">⏰ Abre a las</span>
+            <span class="target-time-badge" id="targetTime">--:--</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-info">
+          <span id="progressStepText">Siguiente cambio de luz en --:--</span>
+          <span id="progressPercentText">Progreso de Fase: 0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL DE 5 INDICADORES EN 3D -->
+    <div class="card">
+      <div class="section-header">
+        <h3 class="section-title">INDICADORES ÓPTICOS (5 LUCES)</h3>
+        <span class="section-subtitle">Estado del panel de control frontal</span>
+      </div>
+
+      <div class="led-container-3d">
+        <div class="led-item red" id="ledItem1">
+          <div class="led-orb" id="ledIcon1">🔴</div>
+          <div class="led-item-label">LUZ 1</div>
+          <div class="led-item-status" id="led1Status">CARGANDO</div>
+        </div>
+
+        <div class="led-item red" id="ledItem2">
+          <div class="led-orb" id="ledIcon2">🔴</div>
+          <div class="led-item-label">LUZ 2</div>
+          <div class="led-item-status" id="led2Status">CARGANDO</div>
+        </div>
+
+        <div class="led-item red" id="ledItem3">
+          <div class="led-orb" id="ledIcon3">🔴</div>
+          <div class="led-item-label">LUZ 3</div>
+          <div class="led-item-status" id="led3Status">CARGANDO</div>
+        </div>
+
+        <div class="led-item red" id="ledItem4">
+          <div class="led-orb" id="ledIcon4">🔴</div>
+          <div class="led-item-label">LUZ 4</div>
+          <div class="led-item-status" id="led4Status">CARGANDO</div>
+        </div>
+
+        <div class="led-item red" id="ledItem5">
+          <div class="led-orb" id="ledIcon5">🔴</div>
+          <div class="led-item-label">LUZ 5</div>
+          <div class="led-item-status" id="led5Status">CARGANDO</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRAMACIÓN DE PRÓXIMAS APERTURAS -->
+    <div class="card">
+      <div class="section-header">
+        <h3 class="section-title">📅 PRÓXIMAS APERTURAS (FASE VERDE)</h3>
+        <span class="section-subtitle">Horarios calculados de las ventanas de 60 minutos</span>
+      </div>
+
+      <div class="schedule-grid" id="scheduleGrid">
+        <!-- Generado dinámicamente -->
+      </div>
+    </div>
+
+    <!-- BOTONERA DE ACCIÓN -->
+    <div class="toolbar">
+      <button class="btn btn-share" id="shareBtn">🔗 Copiar Enlace para la Org</button>
+      <button class="btn btn-audio" id="audioToggleBtn">🔕 Alertas: OFF</button>
+
+      <div id="memberNotice" class="status-badge">
+        🛰️ Vista Sincronizada
+      </div>
+
+      <button class="btn btn-admin" id="toggleAdminBtn">🔑 Acceso Admin</button>
+    </div>
+
+    <!-- PANEL ADMIN -->
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-header">
+        ⚠️ PANEL DE CORRECCIÓN DE TIEMPOS (ADMINISTRADOR)
+      </div>
+
+      <div class="adjust-row">
+        <span class="adjust-label">⏱️ MINUTOS:</span>
+        <div class="quick-adjust-group">
+          <button class="btn-adjust minus" onclick="adjustOffset(-10 * 60 * 1000)">⏮️ -10 Min</button>
+          <button class="btn-adjust minus" onclick="adjustOffset(-1 * 60 * 1000)">◀️ -1 Min</button>
+          <button class="btn-adjust" onclick="adjustOffset(1 * 60 * 1000)">▶️ +1 Min</button>
+          <button class="btn-adjust" onclick="adjustOffset(10 * 60 * 1000)">⏭️ +10 Min</button>
+        </div>
+      </div>
+
+      <div class="adjust-row">
+        <span class="adjust-label">🎯 SEGUNDOS:</span>
+        <div class="quick-adjust-group">
+          <button class="btn-adjust minus" onclick="adjustOffset(-10 * 1000)">⏪ -10s</button>
+          <button class="btn-adjust minus" onclick="adjustOffset(-1 * 1000)">◂ -1s</button>
+          <button class="btn-adjust" onclick="adjustOffset(1 * 1000)">▸ +1s</button>
+          <button class="btn-adjust" onclick="adjustOffset(10 * 1000)">⏩ +10s</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+        <button class="btn" id="manualSyncBtn">🎯 Sincronización Manual Exacta</button>
+        <button class="btn" id="resetBtn" style="border-color: var(--red-main); color: var(--red-main);">🔄 Restablecer Cero</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // DURACIONES OFICIALES
+    const PREP_DURATION = 120 * 60 * 1000;   // 120 Min (Fase Roja)
+    const ACTIVE_DURATION = 60 * 60 * 1000;  // 60 Min (Fase Verde)
+    const HAZARD_DURATION = 5 * 60 * 1000;   // 5 Min (Gracia / Evacuación)
+    const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION; // 185 Min
+
+    const NUM_LEDS = 5;
+    const PREP_STEP = PREP_DURATION / NUM_LEDS;     // 24 min por luz en Fase Roja
+    const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; // 12 min por luz en Fase Verde
+
+    const WARN_THRESHOLD = 15 * 60 * 1000;
+
+    let customOffset = parseInt(localStorage.getItem('hangar_sc_offset_v6') || '0');
+    let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
+    let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
+
+    let lastPrepGreenCount = -1;
+    let currentPhase = ''; 
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('sync')) {
+      customOffset = parseInt(urlParams.get('sync')) || 0;
+    }
+
+    const phaseBadge = document.getElementById('phaseBadge');
+    const phaseTitle = document.getElementById('phaseTitle');
+    const phaseDesc = document.getElementById('phaseDesc');
+    const nextPhaseText = document.getElementById('nextPhaseText');
+    const clockBox = document.getElementById('clockBox');
+    const clockLabel = document.getElementById('clockLabel');
+    const timerDigits = document.getElementById('timerDigits');
+    const targetTimeLabel = document.getElementById('targetTimeLabel');
+    const targetTime = document.getElementById('targetTime');
+    const progressStepText = document.getElementById('progressStepText');
+    const progressPercentText = document.getElementById('progressPercentText');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const scheduleGrid = document.getElementById('scheduleGrid');
+    const audioToggleBtn = document.getElementById('audioToggleBtn');
+
+    /* AUDIO API */
+    let audioCtx = null;
+
+    function initAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type) {
+      if (!audioEnabled) return;
+      initAudioContext();
+      if (!audioCtx) return;
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'light') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'open') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.3);
+        });
+      } else if (type === 'hazard') {
+        for (let i = 0; i < 3; i++) {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(850, now + i * 0.22);
+          osc.frequency.linearRampToValueAtTime(450, now + i * 0.22 + 0.16);
+          gain.gain.setValueAtTime(0.2, now + i * 0.22);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.22 + 0.18);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.22);
+          osc.stop(now + i * 0.22 + 0.18);
+        }
+      }
+    }
+
+    function speakText(text) {
+      if (!audioEnabled) return;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'es-ES';
+        utterance.rate = 0.95;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function updateAudioButtonUI() {
+      if (audioEnabled) {
+        audioToggleBtn.className = 'btn btn-audio active';
+        audioToggleBtn.textContent = '🔔 Alertas: ON';
+      } else {
+        audioToggleBtn.className = 'btn btn-audio';
+        audioToggleBtn.textContent = '🔕 Alertas: OFF';
+      }
+    }
+
+    audioToggleBtn.addEventListener('click', () => {
+      audioEnabled = !audioEnabled;
+      localStorage.setItem('hangar_sc_audio', audioEnabled);
+      updateAudioButtonUI();
+
+      if (audioEnabled) {
+        initAudioContext();
+        playSound('light');
+        speakText('Alertas activadas');
+      } else {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      }
+    });
+
+    updateAudioButtonUI();
+
+    /* BUCLE PRINCIPAL DE ESTADO DEL CICLO */
+    function updateHangarState() {
+      const now = Date.now() + customOffset;
+      const cycleElapsed = now % TOTAL_CYCLE;
+
+      if (cycleElapsed < PREP_DURATION) {
+        // --- FASE ROJA (120 MINUTOS) ---
+        const timeLeft = PREP_DURATION - cycleElapsed;
+        const formattedTime = formatHHMMSS(timeLeft);
+        const percent = Math.floor((cycleElapsed / PREP_DURATION) * 100);
+
+        const tabStatus = (timeLeft <= WARN_THRESHOLD) ? 'PRÓXIMO A ABRIRSE' : 'CERRADO';
+        document.title = `[${tabStatus} ${formattedTime}] · ESPAÑA2942`;
+
+        phaseBadge.className = 'phase-badge prep';
+        phaseTitle.textContent = (timeLeft <= WARN_THRESHOLD) ? 'PRÓXIMO A ABRIRSE' : 'FASE ROJA (CARGANDO)';
+        phaseDesc.textContent = 'Hangar Cerrado · Carga de sistemas (120 min)';
+        nextPhaseText.textContent = 'Siguiente: FASE VERDE (Abierto 60 min)';
+
+        clockBox.className = 'clock-box';
+        clockLabel.textContent = 'TIEMPO HASTA APERTURA';
+        timerDigits.textContent = formattedTime;
+        targetTimeLabel.textContent = '⏰ Abre a las';
+        targetTime.textContent = getTargetWallTime(timeLeft);
+
+        const greenCount = Math.floor(cycleElapsed / PREP_STEP);
+        const nextLightMs = PREP_STEP - (cycleElapsed % PREP_STEP);
+        progressStepText.textContent = `Próxima luz verde en: ${formatHHMMSS(nextLightMs)}`;
+        progressPercentText.textContent = `Progreso Carga: ${percent}%`;
+        progressBarFill.style.width = `${percent}%`;
+        progressBarFill.style.background = 'var(--red-main)';
+
+        updateLedsForPrep(greenCount);
+
+        if (lastPrepGreenCount !== -1 && greenCount > lastPrepGreenCount && greenCount > 0) {
+          playSound('light');
+          speakText(`Luz ${greenCount} cargada en verde`);
+        }
+        lastPrepGreenCount = greenCount;
+        currentPhase = 'PREP';
+
+      } else if (cycleElapsed < PREP_DURATION + ACTIVE_DURATION) {
+        // --- FASE VERDE (60 MINUTOS) ---
+        if (currentPhase !== 'ACTIVE' && currentPhase !== '') {
+          playSound('open');
+          speakText('Apertura de hangar. Fase verde activa.');
+        }
+
+        lastPrepGreenCount = -1;
+
+        const activeElapsed = cycleElapsed - PREP_DURATION;
+        const timeLeft = ACTIVE_DURATION - activeElapsed;
+        const formattedTime = formatHHMMSS(timeLeft);
+        const percent = Math.floor((activeElapsed / ACTIVE_DURATION) * 100);
+
+        const tabStatus = (timeLeft <= WARN_THRESHOLD) ? 'CIERRE INMINENTE' : 'ABIERTO';
+        document.title = `[${tabStatus} ${formattedTime}] · ESPAÑA2942`;
+
+        phaseBadge.className = 'phase-badge active';
+        phaseTitle.textContent = (timeLeft <= WARN_THRESHOLD) ? 'CIERRE EN ' + formattedTime : 'FASE VERDE (ABIERTO)';
+        phaseDesc.textContent = 'Hangar Abierto · Tiempo activo disponible';
+        nextPhaseText.textContent = 'Siguiente: PERÍODO DE GRACIA Y EVACUACIÓN (5 min)';
+
+        clockBox.className = 'clock-box active-mode';
+        clockLabel.textContent = 'TIEMPO HASTA CIERRE';
+        timerDigits.textContent = formattedTime;
+        targetTimeLabel.textContent = '⏰ Cierra a las';
+        targetTime.textContent = getTargetWallTime(timeLeft);
+
+        const offCount = Math.floor(activeElapsed / ACTIVE_STEP);
+        const nextLightOffMs = ACTIVE_STEP - (activeElapsed % ACTIVE_STEP);
+        progressStepText.textContent = `Siguiente luz se apaga en: ${formatHHMMSS(nextLightOffMs)}`;
+        progressPercentText.textContent = `Tiempo Consumido: ${percent}%`;
+        progressBarFill.style.width = `${percent}%`;
+        progressBarFill.style.background = 'var(--green-main)';
+
+        updateLedsForActive(offCount);
+        currentPhase = 'ACTIVE';
+
+      } else {
+        // --- PERÍODO DE GRACIA / PELIGRO (5 MINUTOS) ---
+        if (currentPhase !== 'HAZARD' && currentPhase !== '') {
+          playSound('hazard');
+          speakText('Atención. Tiempo agotado. Evacuar hangar.');
+        }
+
+        lastPrepGreenCount = -1;
+
+        const hazardElapsed = cycleElapsed - (PREP_DURATION + ACTIVE_DURATION);
+        const timeLeft = HAZARD_DURATION - hazardElapsed;
+        const formattedTime = formatHHMMSS(timeLeft);
+        const percent = Math.floor((hazardElapsed / HAZARD_DURATION) * 100);
+
+        document.title = `[⚠️ EVACUACIÓN ${formattedTime}] · ESPAÑA2942`;
+        phaseBadge.className = 'phase-badge hazard';
+        phaseTitle.textContent = 'PERÍODO DE GRACIA / GAS';
+        phaseDesc.textContent = '¡EVACUACIÓN! Cierre completo del hangar';
+        nextPhaseText.textContent = 'Siguiente: REINICIO DE CICLO ROJO (2 Horas)';
+
+        clockBox.className = 'clock-box hazard-mode';
+        clockLabel.textContent = 'BLOQUEO COMPLETO EN';
+        timerDigits.textContent = formattedTime;
+        targetTimeLabel.textContent = '⚠️ Bloqueo a las';
+        targetTime.textContent = getTargetWallTime(timeLeft);
+
+        progressStepText.textContent = '¡Evacuar el hangar de inmediato!';
+        progressPercentText.textContent = `Evacuación: ${percent}%`;
+        progressBarFill.style.width = `${percent}%`;
+        progressBarFill.style.background = 'var(--hazard-main)';
+
+        updateLedsForHazard();
+        currentPhase = 'HAZARD';
+      }
+
+      updateSchedule(now, cycleElapsed);
+    }
+
+    /* LÓGICA EXACTA DE LAS 5 LUCES */
+
+    // Fase Roja: De 0 a 5 luces se van volviendo VERDES de izquierda a derecha
+    function updateLedsForPrep(greenCount) {
+      for (let i = 1; i <= NUM_LEDS; i++) {
+        const item = document.getElementById(`ledItem${i}`);
+        const icon = document.getElementById(`ledIcon${i}`);
+        const status = document.getElementById(`led${i}Status`);
+
+        if (i <= greenCount) {
+          item.className = 'led-item green';
+          icon.textContent = '🟢';
+          status.textContent = 'LISTO';
+        } else {
+          item.className = 'led-item red';
+          icon.textContent = '🔴';
+          status.textContent = 'PENDIENTE';
+        }
+      }
+    }
+
+    // Fase Verde: De 0 a 5 luces se van APAGANDO (OFF) de izquierda a derecha
+    function updateLedsForActive(offCount) {
+      for (let i = 1; i <= NUM_LEDS; i++) {
+        const item = document.getElementById(`ledItem${i}`);
+        const icon = document.getElementById(`ledIcon${i}`);
+        const status = document.getElementById(`led${i}Status`);
+
+        if (i <= offCount) {
+          item.className = 'led-item off';
+          icon.textContent = '⚫';
+          status.textContent = 'CONSUMIDO';
+        } else {
+          item.className = 'led-item green';
+          icon.textContent = '🟢';
+          status.textContent = 'ACTIVO';
+        }
+      }
+    }
+
+    // Fase Gracia/Gas: Todas en modo aviso o apagadas
+    function updateLedsForHazard() {
+      for (let i = 1; i <= NUM_LEDS; i++) {
+        const item = document.getElementById(`ledItem${i}`);
+        const icon = document.getElementById(`ledIcon${i}`);
+        const status = document.getElementById(`led${i}Status`);
+
+        item.className = 'led-item hazard';
+        icon.textContent = '⚠️';
+        status.textContent = 'PELIGRO';
+      }
+    }
+
+    /* PROGRAMACIÓN DE APERTURAS FUTURAS */
+    function updateSchedule(now, cycleElapsed) {
+      const currentCycleStart = now - cycleElapsed;
+      
+      let firstFutureOpen = currentCycleStart + PREP_DURATION;
+      if (cycleElapsed >= PREP_DURATION) {
+        firstFutureOpen += TOTAL_CYCLE;
+      }
+
+      let html = '';
+      const todayDate = new Date(now).getDate();
+
+      for (let i = 0; i < 4; i++) {
+        const openMs = firstFutureOpen + (i * TOTAL_CYCLE);
+        const closeMs = openMs + ACTIVE_DURATION;
+        const msUntil = openMs - now;
+
+        const openDate = new Date(openMs);
+        const closeDate = new Date(closeMs);
+
+        const openStr = openDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const closeStr = closeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const isTomorrow = openDate.getDate() !== todayDate;
+        const dateTag = isTomorrow 
+          ? `<span class="schedule-date-badge">MAÑANA</span>` 
+          : `<span class="schedule-date-badge" style="background:rgba(16,185,129,0.15); color:var(--green-main);">HOY</span>`;
+
+        const hoursUntil = Math.floor(msUntil / (1000 * 60 * 60));
+        const minsUntil = Math.floor((msUntil % (1000 * 60 * 60)) / (1000 * 60));
+
+        let tagTitle = (i === 0) ? 'PRÓXIMA APERTURA' : `APERTURA +${i + 1}`;
+
+        html += `
+          <div class="schedule-card">
+            <div class="schedule-header">
+              <span class="schedule-tag">${tagTitle}</span>
+              ${dateTag}
+            </div>
+            <div class="schedule-window">${openStr} - ${closeStr}</div>
+            <div class="schedule-eta">⏳ En ${hoursUntil}h ${minsUntil}m aprox.</div>
+          </div>
+        `;
+      }
+
+      scheduleGrid.innerHTML = html;
+    }
+
+    function formatHHMMSS(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const hours = Math.floor(totalSec / 3600);
+      const mins = Math.floor((totalSec % 3600) / 60);
+      const secs = totalSec % 60;
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function getTargetWallTime(msRemaining) {
+      const targetDate = new Date(Date.now() + msRemaining);
+      return targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function adjustOffset(ms) {
+      customOffset += ms;
+      localStorage.setItem('hangar_sc_offset_v6', customOffset);
+      updateHangarState();
+    }
+
+    const toggleAdminBtn = document.getElementById('toggleAdminBtn');
+    const adminPanel = document.getElementById('adminPanel');
+
+    if (isAdminUnlocked) {
+      adminPanel.classList.add('active');
+      toggleAdminBtn.textContent = '🔒 Cerrar Panel Admin';
+    }
+
+    toggleAdminBtn.addEventListener('click', () => {
+      if (!isAdminUnlocked) {
+        const pass = prompt("Introduce la clave de Administrador:");
+        if (pass === "achupirla") {
+          isAdminUnlocked = true;
+          localStorage.setItem('hangar_sc_admin', 'true');
+          adminPanel.classList.add('active');
+          toggleAdminBtn.textContent = '🔒 Cerrar Panel Admin';
+        } else if (pass !== null) {
+          alert("Clave incorrecta.");
+        }
+      } else {
+        isAdminUnlocked = false;
+        localStorage.setItem('hangar_sc_admin', 'false');
+        adminPanel.classList.remove('active');
+        toggleAdminBtn.textContent = '🔑 Acceso Admin';
+      }
+    });
+
+    document.getElementById('shareBtn').addEventListener('click', () => {
+      const cleanUrl = `${window.location.origin}${window.location.pathname}?sync=${customOffset}`;
+      navigator.clipboard.writeText(cleanUrl);
+      alert(`¡Enlace copiado al portapapeles!\n\nComparte este enlace para sincronizar a tus compañeros:\n\n${cleanUrl}`);
+    });
+
+    document.getElementById('manualSyncBtn').addEventListener('click', () => {
+      const phaseInput = prompt("1 = FASE ROJA (120 min)\n2 = FASE VERDE (60 min)\n3 = PERÍODO GRACIA / PELIGRO (5 min)", "1");
+      if (!phaseInput) return;
+
+      const timeInput = prompt("Introduce el tiempo restante de la fase (HH:MM:SS):", "01:50:00");
+      if (!timeInput) return;
+
+      const parts = timeInput.trim().split(':');
+      let totalMs = 0;
+      if (parts.length === 3) {
+        totalMs = ((parseInt(parts[0], 10) * 3600) + (parseInt(parts[1], 10) * 60) + parseInt(parts[2], 10)) * 1000;
+      } else if (parts.length === 2) {
+        totalMs = ((parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10)) * 1000;
+      }
+
+      if (!isNaN(totalMs) && totalMs >= 0) {
+        let targetElapsed = 0;
+        if (phaseInput.trim() === "1") targetElapsed = PREP_DURATION - totalMs;
+        else if (phaseInput.trim() === "2") targetElapsed = (PREP_DURATION + ACTIVE_DURATION) - totalMs;
+        else if (phaseInput.trim() === "3") targetElapsed = TOTAL_CYCLE - totalMs;
+
+        const currentElapsed = Date.now() % TOTAL_CYCLE;
+        customOffset = targetElapsed - currentElapsed;
+        localStorage.setItem('hangar_sc_offset_v6', customOffset);
+        updateHangarState();
+        alert("¡Sincronización manual aplicada!");
+      }
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      customOffset = 0;
+      localStorage.removeItem('hangar_sc_offset_v6');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      updateHangarState();
+      alert('Sincronización restablecida.');
+    });
+
+    setInterval(updateHangarState, 1000);
+    updateHangarState();
+  </script>
+</body>
+</html>
