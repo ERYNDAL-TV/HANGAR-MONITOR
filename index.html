@@ -424,7 +424,6 @@
     }
     .led-item.red .led-item-status { color: var(--red-main); }
 
-    /* ANIMACIÓN DE SIRENA PARA PELIGRO */
     @keyframes siren-flash {
       0% {
         background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
@@ -451,7 +450,6 @@
     }
     .led-item.hazard .led-item-status { color: var(--hazard-main); }
 
-    /* EFECTO MOMENTÁNEO DE SIRENA AL CAMBIAR DE ESTADO */
     @keyframes transition-siren {
       0% { transform: scale(1); filter: brightness(1); }
       25% { transform: scale(1.1); filter: brightness(1.8) hue-rotate(30deg); box-shadow: 0 0 40px #f59e0b; }
@@ -581,7 +579,6 @@
       box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
     }
 
-    /* BOTÓN ADMIN DISIMULADO */
     .btn-stealth {
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.04);
@@ -650,7 +647,7 @@
     .btn-adjust.minus { border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
     .btn-adjust.minus:hover { background: var(--red-main); color: #fff; border-color: var(--red-main); }
 
-    /* FOOTER TÁCTICO DE ESTADÍSTICAS */
+    /* FOOTER ESTADÍSTICAS */
     .footer-stats {
       margin-top: 10px;
       display: flex;
@@ -821,7 +818,7 @@
     <div class="card">
       <div class="section-header">
         <h3 class="section-title">📅 PRÓXIMAS APERTURAS (FASE VERDE)</h3>
-        <span class="section-subtitle">Horarios calculados de las ventanas de 60 minutos</span>
+        <span class="section-subtitle">Horarios calculados de las ventanas de 60 minutos (hora local)</span>
       </div>
 
       <div class="schedule-grid" id="scheduleGrid">
@@ -867,7 +864,7 @@
       </div>
     </div>
 
-    <!-- FOOTER ESTADÍSTICAS DISIMULADO -->
+    <!-- FOOTER ESTADÍSTICAS -->
     <footer class="footer-stats">
       <div class="stat-pill">
         <span class="stat-dot pulse-online"></span>
@@ -884,15 +881,14 @@
   </div>
 
   <script>
-    // DURACIONES OFICIALES (185 MINUTOS TOTAL)
     const PREP_DURATION = 120 * 60 * 1000;   // 120 Min (Fase Roja)
     const ACTIVE_DURATION = 60 * 60 * 1000;  // 60 Min (Fase Verde)
     const HAZARD_DURATION = 5 * 60 * 1000;   // 5 Min (Gracia / Evacuación)
     const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION;
 
     const NUM_LEDS = 5;
-    const PREP_STEP = PREP_DURATION / NUM_LEDS;     // 24 min por luz en Fase Roja
-    const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; // 12 min por luz en Fase Verde
+    const PREP_STEP = PREP_DURATION / NUM_LEDS;     
+    const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; 
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
     let adminCustomOffset = parseInt(localStorage.getItem('hangar_sc_offset_v6') || '0');
@@ -1047,7 +1043,7 @@
 
     updateAudioButtonUI();
 
-    /* --- BUCLE PRINCIPAL Y GESTIÓN DE ESTADOS DE LUCES --- */
+    /* --- BUCLE PRINCIPAL Y GESTIÓN DE ESTADOS --- */
     function updateHangarState() {
       const trueNow = Date.now() + fetchedClockOffset;
       const nowAdjusted = trueNow + adminCustomOffset;
@@ -1070,7 +1066,7 @@
         clockLabel.textContent = 'TIEMPO HASTA APERTURA';
         timerDigits.textContent = formattedTime;
         targetTimeLabel.textContent = '⏰ Abre a las';
-        targetTime.textContent = getTargetWallTime(timeLeft);
+        targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
 
         const nextLightMs = PREP_STEP - (cycleElapsed % PREP_STEP);
         progressStepText.textContent = `Próxima luz verde en: ${formatHHMMSS(nextLightMs)}`;
@@ -1104,7 +1100,7 @@
         clockLabel.textContent = 'TIEMPO HASTA CIERRE';
         timerDigits.textContent = formattedTime;
         targetTimeLabel.textContent = '⏰ Cierra a las';
-        targetTime.textContent = getTargetWallTime(timeLeft);
+        targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
 
         const nextLightOffMs = ACTIVE_STEP - (activeElapsed % ACTIVE_STEP);
         progressStepText.textContent = `Siguiente luz se apaga en: ${formatHHMMSS(nextLightOffMs)}`;
@@ -1136,7 +1132,7 @@
         clockLabel.textContent = 'BLOQUEO COMPLETO EN';
         timerDigits.textContent = formattedTime;
         targetTimeLabel.textContent = '⚠️ Bloqueo a las';
-        targetTime.textContent = getTargetWallTime(timeLeft);
+        targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
 
         progressStepText.textContent = '¡Evacuar el hangar de inmediato!';
         progressPercentText.textContent = `Evacuación: ${percent}%`;
@@ -1150,7 +1146,6 @@
       updateSchedule(trueNow, cycleElapsed);
     }
 
-    /* --- CÁLCULO INDIVIDUAL DE CADA LUZ Y ESTADO CON VOZ IA --- */
     function updateLedsDetailed(cycleElapsed) {
       for (let i = 1; i <= NUM_LEDS; i++) {
         const item = document.getElementById(`ledItem${i}`);
@@ -1160,7 +1155,6 @@
 
         const calc = getLightData(i, cycleElapsed);
 
-        // Disparar efecto de sirena y aviso de voz IA si el estado cambia
         if (prevLightStates[i] && prevLightStates[i] !== calc.state) {
           triggerStateTransitionFlash(orbEl);
           
@@ -1173,7 +1167,6 @@
         }
         prevLightStates[i] = calc.state;
 
-        // Asignar clases y textos según estado correspondiente
         if (calc.state === 'GREEN') {
           item.className = 'led-item green';
           statusEl.textContent = 'ACTIVO';
@@ -1250,6 +1243,7 @@
         const openDate = new Date(openMs);
         const closeDate = new Date(closeMs);
 
+        // Se usa la hora local de cada dispositivo automáticamente
         const openStr = openDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const closeStr = closeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -1286,8 +1280,9 @@
       return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    function getTargetWallTime(msRemaining) {
-      const targetDate = new Date(Date.now() + msRemaining);
+    // Calcula la hora de la región basándose en el tiempo sincronizado
+    function getTargetWallTime(msRemaining, nowAdjusted) {
+      const targetDate = new Date(nowAdjusted + msRemaining);
       return targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
@@ -1359,7 +1354,6 @@
       alert('Sincronización restablecida.');
     });
 
-    /* --- ESTADÍSTICAS Y VISITANTES --- */
     function initStatsCounter() {
       const visitsEl = document.getElementById('visitsCount');
       const key = 'hangar_sc_visits_count';
