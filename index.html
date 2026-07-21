@@ -424,7 +424,7 @@
     }
     .led-item.red .led-item-status { color: var(--red-main); }
 
-    /* ANIMACIÓN DE SIRENA PARA PELIGRO / CAMBIO DE ESTADO */
+    /* ANIMACIÓN DE SIRENA PARA PELIGRO */
     @keyframes siren-flash {
       0% {
         background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
@@ -581,7 +581,7 @@
       box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
     }
 
-    /* BOTÓN ADMIN DISIMULADO (ESTILO STEALTH) */
+    /* BOTÓN ADMIN DISIMULADO */
     .btn-stealth {
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.04);
@@ -902,7 +902,6 @@
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
     let currentPhase = ''; 
 
-    // Almacenamiento para detectar cambios de estado individuales y disparar efecto sirena
     let prevLightStates = {};
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -1073,7 +1072,6 @@
         targetTimeLabel.textContent = '⏰ Abre a las';
         targetTime.textContent = getTargetWallTime(timeLeft);
 
-        const greenCount = Math.floor(cycleElapsed / PREP_STEP);
         const nextLightMs = PREP_STEP - (cycleElapsed % PREP_STEP);
         progressStepText.textContent = `Próxima luz verde en: ${formatHHMMSS(nextLightMs)}`;
         progressPercentText.textContent = `Progreso: ${percent}%`;
@@ -1108,7 +1106,6 @@
         targetTimeLabel.textContent = '⏰ Cierra a las';
         targetTime.textContent = getTargetWallTime(timeLeft);
 
-        const offCount = Math.floor(activeElapsed / ACTIVE_STEP);
         const nextLightOffMs = ACTIVE_STEP - (activeElapsed % ACTIVE_STEP);
         progressStepText.textContent = `Siguiente luz se apaga en: ${formatHHMMSS(nextLightOffMs)}`;
         progressPercentText.textContent = `Tiempo Consumido: ${percent}%`;
@@ -1153,7 +1150,7 @@
       updateSchedule(trueNow, cycleElapsed);
     }
 
-    /* --- CÁLCULO INDIVIDUAL DE CADA LUZ Y ESTADO --- */
+    /* --- CÁLCULO INDIVIDUAL DE CADA LUZ Y ESTADO CON VOZ IA --- */
     function updateLedsDetailed(cycleElapsed) {
       for (let i = 1; i <= NUM_LEDS; i++) {
         const item = document.getElementById(`ledItem${i}`);
@@ -1163,10 +1160,14 @@
 
         const calc = getLightData(i, cycleElapsed);
 
-        // Disparar efecto momentáneo de sirena si el estado cambia
+        // Disparar efecto de sirena y aviso de voz IA si el estado cambia
         if (prevLightStates[i] && prevLightStates[i] !== calc.state) {
           triggerStateTransitionFlash(orbEl);
-          if (calc.state === 'GREEN' || calc.state === 'OFF') {
+          
+          if (calc.state === 'GREEN') {
+            playSound('light');
+            speakText(`Aviso. Luz número ${i} se ha encendido en verde.`);
+          } else if (calc.state === 'OFF' || calc.state === 'HAZARD') {
             playSound('light');
           }
         }
@@ -1192,7 +1193,6 @@
     }
 
     function getLightData(i, cycleElapsed) {
-      // Definición de hitos en el ciclo de 185 min para cada luz
       const prepTurnGreenTime = (i - 1) * PREP_STEP;
       const activeTurnOffTime = PREP_DURATION + (i - 1) * ACTIVE_STEP;
       const hazardStartTime = PREP_DURATION + ACTIVE_DURATION;
@@ -1201,16 +1201,10 @@
       let state = 'PENDING';
       let nextMilestone = prepTurnGreenTime;
 
-      if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < activeTurnOffTime) {
-        state = (cycleElapsed < PREP_DURATION) ? 'GREEN' : 'GREEN';
-        if (cycleElapsed < PREP_DURATION) {
-          nextMilestone = PREP_DURATION; // Se queda verde hasta que termine la fase roja
-        } else {
-          nextMilestone = activeTurnOffTime; // En fase verde, su siguiente hito es apagarse
-        }
-      }
-
-      if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) {
+      if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) {
+        state = 'GREEN';
+        nextMilestone = PREP_DURATION;
+      } else if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) {
         state = 'GREEN';
         nextMilestone = activeTurnOffTime;
       } else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) {
@@ -1219,31 +1213,9 @@
       } else if (cycleElapsed >= hazardStartTime && cycleElapsed < cycleEnd) {
         state = 'HAZARD';
         nextMilestone = cycleEnd;
-      } else if (cycleElapsed < prepTurnGreenTime) {
-        state = 'PENDING';
-        nextMilestone = prepTurnGreenTime;
       } else {
-        // Por defecto si está en el tramo final de prep antes de la fase verde
-        state = 'GREEN';
-        nextMilestone = PREP_DURATION;
-      }
-
-      // Ajustes finos de cronograma para cada luz individual
-      if (cycleElapsed < prepTurnGreenTime) {
         state = 'PENDING';
         nextMilestone = prepTurnGreenTime;
-      } else if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) {
-        state = 'GREEN';
-        nextMilestone = PREP_DURATION; // Esperando a que termine el prep global
-      } else if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) {
-        state = 'GREEN';
-        nextMilestone = activeTurnOffTime; // Esperando su turno de apagado
-      } else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) {
-        state = 'OFF';
-        nextMilestone = hazardStartTime; // Esperando al inicio de peligro
-      } else if (cycleElapsed >= hazardStartTime) {
-        state = 'HAZARD';
-        nextMilestone = cycleEnd; // Esperando al reinicio del ciclo
       }
 
       let timeToNext = nextMilestone - cycleElapsed;
