@@ -441,8 +441,8 @@
       updateHangarState();
     });
 
-    async function syncTrueTime() {
-      const endpoints = ['https://worldtimeapi.org/api/timezone/Etc/UTC', 'https://timeapi.io/api/time/current/zone?timeZone=UTC'];
+async function syncTrueTime() {
+      const endpoints = ['https://worldtimeapi.org/api/timezone/Etc/UTC'];
       for (const url of endpoints) {
         try {
           const startTime = Date.now();
@@ -451,10 +451,19 @@
           const data = await response.json();
           const endTime = Date.now();
           const latency = (endTime - startTime) / 2;
-          let serverTimeMs = data.datetime ? new Date(data.datetime).getTime() : (data.dateTime ? new Date(data.dateTime).getTime() : 0);
+          let serverTimeMs = data.datetime ? new Date(data.datetime).getTime() : 0;
           if (serverTimeMs) {
             fetchedClockOffset = (serverTimeMs + latency) - endTime;
             updateHangarState();
+            return;
+          }
+        } catch (e) {
+          // Si la API externa falla, usa la hora del sistema automáticamente
+          fetchedClockOffset = 0;
+        }
+      }
+      updateHangarState();
+    }
             return;
           }
         } catch (e) {}
