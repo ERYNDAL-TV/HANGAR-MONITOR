@@ -398,6 +398,7 @@
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
     let adminCustomOffset = 0;
+    let utcServerOffset = 0; // Sincronización exacta con hora UTC externa
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
@@ -425,13 +426,28 @@
       userTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
     } catch(e) {}
 
+    // Sincronización automática de hora UTC mediante WorldTimeAPI para alinear exactamente con el estándar oficial
+    async function syncServerTime() {
+      try {
+        const response = await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC');
+        const data = await response.json();
+        const serverTimeMs = new Date(data.datetime).getTime();
+        utcServerOffset = serverTimeMs - Date.now();
+      } catch (e) {
+        console.warn("No se pudo conectar a WorldTimeAPI, usando hora local como respaldo.");
+        utcServerOffset = 0;
+      }
+    }
+    syncServerTime();
+    setInterval(syncServerTime, 10 * 60 * 1000); // Resincronizar cada 10 min
+
+    function getTrueCurrentTime() {
+      return Date.now() + utcServerOffset;
+    }
+
     dbRef.on('value', (snapshot) => {
       const val = snapshot.val();
-      if (val !== null) {
-        adminCustomOffset = val;
-      } else {
-        adminCustomOffset = 0;
-      }
+      adminCustomOffset = (val !== null) ? val : 0;
       updateHangarState();
     });
 
@@ -530,8 +546,8 @@
     updateAudioButtonUI();
 
     function updateHangarState() {
-      // Base temporal unificada estrictamente con el reloj local + offset de administrador
-      const trueNow = Date.now();
+      // Base temporal unificada con hora UTC oficial + offset de administrador en la nube
+      const trueNow = getTrueCurrentTime();
       const nowAdjusted = trueNow + adminCustomOffset;
       const cycleElapsed = nowAdjusted % TOTAL_CYCLE;
 
@@ -753,7 +769,7 @@
         else if (phaseInput.trim() === "2") targetElapsed = (PREP_DURATION + ACTIVE_DURATION) - totalMs;
         else if (phaseInput.trim() === "3") targetElapsed = TOTAL_CYCLE - totalMs;
 
-        const trueNow = Date.now();
+        const trueNow = getTrueCurrentTime();
         const currentElapsed = trueNow % TOTAL_CYCLE;
         const newOffset = targetElapsed - currentElapsed;
         dbRef.set(newOffset);
