@@ -405,6 +405,7 @@
     const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; 
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
+    // Valor local por defecto en caso de que la nube tarde un instante
     let globalCycleStart = Date.now() - PREP_DURATION;
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
@@ -437,17 +438,15 @@
       return Date.now() + utcServerOffset;
     }
 
-    // CORRECCIÓN CLAVE: Usar .once() para cargar el valor inicial sin sobrescribir la BD por error
+    // CORRECCIÓN DEFINITIVA: Solo leemos de la nube. NINGÚN usuario normal sobrescribe la base de datos al entrar.
     dbRef.once('value').then((snapshot) => {
       const val = snapshot.val();
       if (val !== null) {
         globalCycleStart = val;
-      } else {
-        dbRef.set(globalCycleStart);
       }
       updateHangarState();
 
-      // Escuchar cambios posteriores en tiempo real sin causar bucles de reseteo
+      // Escuchar cambios en tiempo real ordenados por ti desde el panel de admin
       dbRef.on('value', (snapshot) => {
         const newVal = snapshot.val();
         if (newVal !== null && newVal !== globalCycleStart) {
@@ -456,7 +455,7 @@
         }
       });
     }).catch((error) => {
-      console.warn("Aviso de Firebase (usando ciclo local):", error);
+      console.warn("Aviso de Firebase:", error);
       updateHangarState();
     });
 
@@ -739,7 +738,7 @@
       if (globalCycleStart !== null) {
         globalCycleStart += ms;
         updateHangarState(); 
-        dbRef.set(globalCycleStart); 
+        dbRef.set(globalCycleStart); // Esto actualiza la nube para todos los usuarios en tiempo real
       }
     }
 
@@ -784,8 +783,8 @@
         
         globalCycleStart = newCycleStart; 
         updateHangarState();
-        dbRef.set(newCycleStart); 
-        alert("¡Anclaje absoluto sincronizado!");
+        dbRef.set(newCycleStart); // Actualiza la nube para que cualquier miembro lo vea al instante
+        alert("¡Anclaje absoluto sincronizado en la nube para todos!");
       }
     });
 
@@ -794,8 +793,8 @@
       const defaultStart = trueNow - (120 * 60 * 1000);
       globalCycleStart = defaultStart; 
       updateHangarState();
-      dbRef.set(defaultStart);
-      alert('Anclaje restablecido.');
+      dbRef.set(defaultStart); // Actualiza la nube globalmente
+      alert('Anclaje restablecido en la nube.');
     });
 
     setInterval(updateHangarState, 1000);
