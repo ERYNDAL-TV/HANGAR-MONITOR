@@ -341,12 +341,21 @@
     <div class="admin-panel" id="adminPanel">
       <div class="admin-header">⚠️ PANEL DE ANCLAJE ABSOLUTO (ADMINISTRADOR EN LA NUBE)</div>
       <div class="adjust-row">
-        <span class="adjust-label">⏱️ AJUSTE RÁPIDO:</span>
+        <span class="adjust-label">⏱️ AJUSTE MIN:</span>
         <div class="quick-adjust-group">
           <button class="btn-adjust minus" onclick="adjustCycleAnchor(-10 * 60 * 1000)">⏮️ -10 Min</button>
           <button class="btn-adjust minus" onclick="adjustCycleAnchor(-1 * 60 * 1000)">◀️ -1 Min</button>
           <button class="btn-adjust" onclick="adjustCycleAnchor(1 * 60 * 1000)">▶️ +1 Min</button>
           <button class="btn-adjust" onclick="adjustCycleAnchor(10 * 60 * 1000)">⏭️ +10 Min</button>
+        </div>
+      </div>
+      <div class="adjust-row">
+        <span class="adjust-label">⏱️ AJUSTE SEC:</span>
+        <div class="quick-adjust-group">
+          <button class="btn-adjust minus" onclick="adjustCycleAnchor(-10 * 1000)">⏮️ -10s</button>
+          <button class="btn-adjust minus" onclick="adjustCycleAnchor(-1 * 1000)">◀️ -1s</button>
+          <button class="btn-adjust" onclick="adjustCycleAnchor(1 * 1000)">▶️ +1s</button>
+          <button class="btn-adjust" onclick="adjustCycleAnchor(10 * 1000)">⏭️ +10s</button>
         </div>
       </div>
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
@@ -388,7 +397,6 @@
     const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; 
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
-    // Respaldo local inmediato para que la pantalla NUNCA se quede en blanco o con guiones (--:--) si Firebase tarda en conectar
     let globalCycleStart = Date.now() - PREP_DURATION;
     let utcServerOffset = 0;
 
@@ -435,10 +443,8 @@
       return Date.now() + utcServerOffset;
     }
 
-    // Renderizado inmediato local para evitar bloqueos visuales
     updateHangarState();
 
-    // Sincronización en tiempo real con Firebase en segundo plano
     dbRef.on('value', (snapshot) => {
       const val = snapshot.val();
       if (val !== null) {
