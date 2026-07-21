@@ -10,7 +10,6 @@
       measurementId: "G-17ZBG6VN2R"
     };
 
-    // Inicializar Firebase de forma segura
     try {
       firebase.initializeApp(firebaseConfig);
     } catch (e) {
@@ -19,14 +18,15 @@
     
     const dbRef = firebase.database().ref('hangar_sc_offset');
 
-    const PREP_DURATION = 120 * 60 * 1000;   
-    const ACTIVE_DURATION = 60 * 60 * 1000;  
-    const HAZARD_DURATION = 5 * 60 * 1000;   
-    const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION; 
+    // CONFIGURACIÓN OFICIAL CORRECTA (185 min total)
+    const PREP_DURATION = 120 * 60 * 1000;   // 120 min (Fase Roja)
+    const ACTIVE_DURATION = 60 * 60 * 1000;  // 60 min (Fase Verde)
+    const HAZARD_DURATION = 5 * 60 * 1000;   // 5 min (Evacuación / Gracia)
+    const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION; // 185 min (3h 05m)
 
     const NUM_LEDS = 5;
-    const PREP_STEP = PREP_DURATION / NUM_LEDS;     
-    const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; 
+    const PREP_STEP = PREP_DURATION / NUM_LEDS;     // 24 min por luz en fase roja
+    const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; // 12 min por luz en fase verde
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
     let adminCustomOffset = 0;
@@ -59,21 +59,19 @@
       userTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
     } catch(e) {}
 
-    // Escucha de Firebase con control de errores para evitar bloqueos
     dbRef.on('value', (snapshot) => {
       firebaseLoaded = true;
       const val = snapshot.val();
       adminCustomOffset = (val !== null) ? val : 0;
       updateHangarState();
     }, (error) => {
-      console.warn("Aviso de Firebase (usando modo local por seguridad):", error);
+      console.warn("Aviso de Firebase (usando modo local):", error);
       if (!firebaseLoaded) {
         adminCustomOffset = 0;
-        updateHangarState(); // Arranca el reloj local si Firebase deniega acceso
+        updateHangarState();
       }
     });
 
-    // Seguridad por si Firebase tarda más de 1.5 segundos en responder
     setTimeout(() => {
       if (!firebaseLoaded) {
         console.warn("Timeout de Firebase. Forzando inicio local...");
@@ -283,29 +281,43 @@
     }
 
     function getLightData(i, cycleElapsed) {
-      const prepTurnGreenTime = i * PREP_STEP;     
-      const activeTurnOffTime = PREP_DURATION + (i * ACTIVE_STEP); 
       const hazardStartTime = PREP_DURATION + ACTIVE_DURATION;
       const cycleEnd = TOTAL_CYCLE;
 
       let state = 'PENDING';
-      let nextMilestone = prepTurnGreenTime;
+      let nextMilestone = 0;
 
-      if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) { 
-        state = 'GREEN'; 
-        nextMilestone = PREP_DURATION; 
-      }
-      else if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) { 
-        state = 'GREEN'; 
-        nextMilestone = activeTurnOffTime; 
-      }
-      else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) { 
-        state = 'OFF'; 
-        nextMilestone = hazardStartTime; 
-      }
-      else if (cycleElapsed >= hazardStartTime && cycleElapsed < cycleEnd) { 
-        state = 'HAZARD'; 
-        nextMilestone = cycleEnd; 
+      if (cycleElapsed < PREP_DURATION) {
+        // FASE ROJA: Las luces se encienden de 1 a 5 progresivamente
+        const prepTurnGreenTime = i * PREP_STEP;
+        if (cycleElapsed >= prepTurnGreenTime) {
+          state = 'GREEN';
+          nextMilestone = PREP_DURATION;
+        } else {
+          state = 'PENDING';
+          nextMilestone = prepTurnGreenTime;
+        }
+      } else if (cycleElapsed < hazardStartTime) {
+        // FASE VERDE (ACTIVA): Las luces se apagan de 5 a 1 (Luz 1 es la última en apagarse)
+        const activeElapsed = cycleElapsed - PREP_DURATION;
+        const activeRemaining = ACTIVE_DURATION - activeElapsed;
+        
+        // Invertimos el orden para que la luz i=1 corresponda al último bloque (últimos 12 min)
+        const reverseIndex = NUM_LEDS - i; // 4, 3, 2, 1, 0
+        const lightOffThreshold = reverseIndex * ACTIVE_STEP;
+
+        if (activeElapsed >= lightOffThreshold) {
+          state = 'GREEN';
+          nextMilestone = PREP_DURATION + ((reverseIndex + 1) * ACTIVE_STEP);
+          if (nextMilestone > hazardStartTime) nextMilestone = hazardStartTime;
+        } else {
+          state = 'OFF';
+          nextMilestone = PREP_DURATION + lightOffThreshold;
+        }
+      } else {
+        // FASE DE GRACIA / PELIGRO
+        state = 'HAZARD';
+        nextMilestone = cycleEnd;
       }
 
       let timeToNext = nextMilestone - cycleElapsed;
