@@ -374,9 +374,6 @@
   </div>
 
   <script>
-    // ==========================================
-    // CONFIGURACIÓN DE FIREBASE CORREGIDA
-    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyAv9-oAYmG8tM24g-oVFluXFc7SIhtSfag",
       authDomain: "hangar-ejecutivo.firebaseapp.com",
@@ -627,7 +624,7 @@
         currentPhase = 'HAZARD';
       }
 
-      updateSchedule(trueNow, cycleElapsed);
+      updateSchedule(nowAdjusted, cycleElapsed);
     }
 
     function updateLedsDetailed(cycleElapsed) {
@@ -648,7 +645,7 @@
 
     function getLightData(i, cycleElapsed) {
       const prepTurnGreenTime = i * PREP_STEP;     
-      const activeTurnOffTime = PREP_DURATION + (i - 1) * ACTIVE_STEP;
+      const activeTurnOffTime = PREP_DURATION + (i * ACTIVE_STEP); // Corrección en el cálculo progresivo
       const hazardStartTime = PREP_DURATION + ACTIVE_DURATION;
       const cycleEnd = TOTAL_CYCLE;
 
@@ -677,18 +674,18 @@
       return { state, timeToNext };
     }
 
-    function updateSchedule(trueNow, cycleElapsed) {
-      const currentCycleStart = trueNow - cycleElapsed;
+    function updateSchedule(nowAdjusted, cycleElapsed) {
+      const currentCycleStart = nowAdjusted - cycleElapsed; // Corrección: sincronizado con nowAdjusted
       let firstFutureOpen = currentCycleStart + PREP_DURATION;
       if (cycleElapsed >= PREP_DURATION) firstFutureOpen += TOTAL_CYCLE;
 
       let html = '';
-      const todayDate = new Date(trueNow).getDate();
+      const todayDate = new Date(nowAdjusted).getDate();
 
       for (let i = 0; i < 4; i++) {
         const openMs = firstFutureOpen + (i * TOTAL_CYCLE);
         const closeMs = openMs + ACTIVE_DURATION;
-        const msUntil = openMs - trueNow;
+        const msUntil = openMs - nowAdjusted;
         const openDate = new Date(openMs);
         const closeDate = new Date(closeMs);
 
