@@ -742,7 +742,7 @@
             <div class="phase-indicator-dot"></div>
             <div class="phase-text">
               <h2 id="phaseTitle">FASE ROJA</h2>
-              <p id="phaseDesc">Hangar Cerrado · Carga de Sistemas (120 min)</p>
+              <p id="phaseDesc">Hangar Cerrado · Carga de sistemas (120 min)</p>
             </div>
           </div>
           <div class="next-phase-text" id="nextPhaseText">Siguiente: FASE VERDE (Abierto 60 min)</div>
@@ -1186,7 +1186,8 @@
     }
 
     function getLightData(i, cycleElapsed) {
-      const prepTurnGreenTime = (i - 1) * PREP_STEP;
+      // CORREGIDO: Se usa i * PREP_STEP para que se enciendan progresivamente al completar cada bloque de 24 min
+      const prepTurnGreenTime = i * PREP_STEP;     
       const activeTurnOffTime = PREP_DURATION + (i - 1) * ACTIVE_STEP;
       const hazardStartTime = PREP_DURATION + ACTIVE_DURATION;
       const cycleEnd = TOTAL_CYCLE;
@@ -1194,6 +1195,7 @@
       let state = 'PENDING';
       let nextMilestone = prepTurnGreenTime;
 
+      // Durante la fase roja, la luz se enciende cuando cycleElapsed supera su hito (prepTurnGreenTime)
       if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) {
         state = 'GREEN';
         nextMilestone = PREP_DURATION;
@@ -1243,7 +1245,6 @@
         const openDate = new Date(openMs);
         const closeDate = new Date(closeMs);
 
-        // Se usa la hora local de cada dispositivo automáticamente
         const openStr = openDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const closeStr = closeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -1280,7 +1281,6 @@
       return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
-    // Calcula la hora de la región basándose en el tiempo sincronizado
     function getTargetWallTime(msRemaining, nowAdjusted) {
       const targetDate = new Date(nowAdjusted + msRemaining);
       return targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
