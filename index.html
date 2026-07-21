@@ -437,7 +437,7 @@
       return Date.now() + utcServerOffset;
     }
 
-    // LECTURA DE LA NUBE SIN ESCRITURA AUTOMÁTICA
+    // LECTURA DE LA NUBE
     dbRef.on('value', (snapshot) => {
       const val = snapshot.val();
       if (val !== null) {
@@ -731,10 +731,13 @@
       return new Date(trueNow + msRemaining).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
+    // CON CAPTURA DE ERRORES FIREBASE
     function adjustCycleAnchor(ms) {
       if (globalCycleStart !== null) {
         globalCycleStart += ms;
-        dbRef.set(globalCycleStart); 
+        dbRef.set(globalCycleStart)
+          .then(() => console.log("Ajuste rápido de tiempo guardado."))
+          .catch((error) => alert("❌ ERROR FIREBASE en ajuste rápido:\n" + error.message));
       }
     }
 
@@ -758,6 +761,7 @@
       }
     });
 
+    // CON CAPTURA DE ERRORES FIREBASE
     document.getElementById('manualSyncBtn').addEventListener('click', () => {
       const phaseInput = prompt("1 = FASE ROJA (120 min)\n2 = FASE VERDE (60 min)\n3 = PERÍODO GRACIA / PELIGRO (5 min)", "1");
       if (!phaseInput) return;
@@ -777,16 +781,28 @@
         const trueNow = getTrueCurrentTime();
         const newCycleStart = trueNow - targetElapsed;
         
-        dbRef.set(newCycleStart); 
-        alert("¡Anclaje absoluto sincronizado en la nube para todos!");
+        dbRef.set(newCycleStart)
+          .then(() => {
+            alert("✅ ¡Anclaje sincronizado con éxito en la nube!");
+          })
+          .catch((error) => {
+            alert("❌ ERROR FIREBASE: No se pudo guardar. Ve a tu consola de Firebase y revisa las reglas de Realtime Database.\n\nDetalle: " + error.message);
+          });
       }
     });
 
+    // CON CAPTURA DE ERRORES FIREBASE
     document.getElementById('resetBtn').addEventListener('click', () => {
       const trueNow = getTrueCurrentTime();
-      const defaultStart = trueNow - (120 * 60 * 1000);
-      dbRef.set(defaultStart); 
-      alert('Anclaje restablecido en la nube.');
+      const defaultStart = trueNow - (120 * 60 * 1000); // Forzar que lleve 120 min
+      
+      dbRef.set(defaultStart)
+        .then(() => {
+          alert('✅ Anclaje restablecido en la nube.');
+        })
+        .catch((error) => {
+          alert("❌ ERROR FIREBASE: No se pudo restablecer. Ve a tu consola de Firebase y revisa las reglas de Realtime Database.\n\nDetalle: " + error.message);
+        });
     });
 
     setInterval(updateHangarState, 1000);
