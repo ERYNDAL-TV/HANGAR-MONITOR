@@ -378,26 +378,26 @@
     // CONFIGURACIÓN DE FIREBASE
     // ==========================================
     const firebaseConfig = {
-  apiKey: "AIzaSyAv9-oAYmG8tM24g-oVFluXFc7SIhtSfag",
-  authDomain: "hangar-ejecutivo.firebaseapp.com",
-  projectId: "hangar-ejecutivo",
-  storageBucket: "hangar-ejecutivo.firebasestorage.app",
-  messagingSenderId: "344290123510",
-  appId: "1:344290123510:web:f41fd77de0980fbdd5d6d7",
-  measurementId: "G-17ZBG6VN2R"
-};
+      apiKey: "AIzaSyAv9-oAYmG8tM24g-oVFluXFc7SIhtSfag",
+      authDomain: "hangar-ejecutivo.firebaseapp.com",
+      projectId: "hangar-ejecutivo",
+      storageBucket: "hangar-ejecutivo.firebasestorage.app",
+      messagingSenderId: "344290123510",
+      appId: "1:344290123510:web:f41fd77de0980fbdd5d6d7",
+      measurementId: "G-17ZBG6VN2R"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const dbRef = firebase.database().ref('hangar_sc_offset');
 
-    const PREP_DURATION = 120 * 60 * 1000;   
-    const ACTIVE_DURATION = 60 * 60 * 1000;  
-    const HAZARD_DURATION = 5 * 60 * 1000;   
-    const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION;
+    const PREP_DURATION = 120 * 60 * 1000;   // 120 minutos (Fase Roja)
+    const ACTIVE_DURATION = 60 * 60 * 1000;  // 60 minutos (Fase Verde / Abierto)
+    const HAZARD_DURATION = 5 * 60 * 1000;   // 5 minutos (Evacuación / Luces Amarillas)
+    const TOTAL_CYCLE = PREP_DURATION + ACTIVE_DURATION + HAZARD_DURATION; // 185 min totales
 
     const NUM_LEDS = 5;
-    const PREP_STEP = PREP_DURATION / NUM_LEDS;     
-    const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; 
+    const PREP_STEP = PREP_DURATION / NUM_LEDS;     // 24 min por LED en preparación
+    const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; // 12 min por LED apagándose en verde
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
     let adminCustomOffset = 0;
@@ -670,10 +670,22 @@
       let state = 'PENDING';
       let nextMilestone = prepTurnGreenTime;
 
-      if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) { state = 'GREEN'; nextMilestone = PREP_DURATION; }
-      else if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) { state = 'GREEN'; nextMilestone = activeTurnOffTime; }
-      else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) { state = 'OFF'; nextMilestone = hazardStartTime; }
-      else if (cycleElapsed >= hazardStartTime && cycleElapsed < cycleEnd) { state = 'HAZARD'; nextMilestone = cycleEnd; }
+      if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) { 
+        state = 'GREEN'; 
+        nextMilestone = PREP_DURATION; 
+      }
+      else if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) { 
+        state = 'GREEN'; 
+        nextMilestone = activeTurnOffTime; 
+      }
+      else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) { 
+        state = 'OFF'; 
+        nextMilestone = hazardStartTime; 
+      }
+      else if (cycleElapsed >= hazardStartTime && cycleElapsed < cycleEnd) { 
+        state = 'HAZARD'; 
+        nextMilestone = cycleEnd; 
+      }
 
       let timeToNext = nextMilestone - cycleElapsed;
       if (timeToNext <= 0) timeToNext = 1000;
