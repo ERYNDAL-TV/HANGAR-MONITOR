@@ -354,9 +354,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex: 1;
-      min-width: 90px;
+      min-width: 110px;
     }
 
     .led-orb {
@@ -366,8 +366,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
-      font-weight: 900;
       position: relative;
       transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -394,8 +392,20 @@
 
     .led-item-status {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .led-item-countdown {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: rgba(3, 7, 18, 0.6);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
       letter-spacing: 0.5px;
     }
 
@@ -404,7 +414,6 @@
       background: radial-gradient(circle at 35% 30%, #6ee7b7 0%, #10b981 50%, #047857 100%);
       border: 3px solid #34d399;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(0, 60, 30, 0.7), 0 0 25px rgba(16, 185, 129, 0.65);
-      color: #ffffff;
     }
     .led-item.green .led-item-status { color: var(--green-main); }
 
@@ -412,11 +421,10 @@
       background: radial-gradient(circle at 35% 30%, #fca5a5 0%, #ef4444 50%, #b91c1c 100%);
       border: 3px solid #f87171;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(60, 0, 0, 0.7), 0 0 25px rgba(239, 68, 68, 0.65);
-      color: #ffffff;
     }
     .led-item.red .led-item-status { color: var(--red-main); }
 
-    /* ANIMACIÓN DE SIRENA PARA PELIGRO */
+    /* ANIMACIÓN DE SIRENA PARA PELIGRO / CAMBIO DE ESTADO */
     @keyframes siren-flash {
       0% {
         background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
@@ -428,7 +436,7 @@
         background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f59e0b 40%, #92400e 100%);
         border: 3px solid #fef08a;
         box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), inset 0 -6px 10px rgba(120, 60, 0, 0.7), 0 0 45px rgba(245, 158, 11, 0.95);
-        transform: scale(1.04);
+        transform: scale(1.06);
       }
       100% {
         background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
@@ -443,11 +451,23 @@
     }
     .led-item.hazard .led-item-status { color: var(--hazard-main); }
 
+    /* EFECTO MOMENTÁNEO DE SIRENA AL CAMBIAR DE ESTADO */
+    @keyframes transition-siren {
+      0% { transform: scale(1); filter: brightness(1); }
+      25% { transform: scale(1.1); filter: brightness(1.8) hue-rotate(30deg); box-shadow: 0 0 40px #f59e0b; }
+      50% { transform: scale(0.95); filter: brightness(0.8); }
+      75% { transform: scale(1.08); filter: brightness(1.6) hue-rotate(30deg); box-shadow: 0 0 40px #f59e0b; }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+
+    .led-orb.state-transition {
+      animation: transition-siren 0.8s ease-in-out 2;
+    }
+
     .led-item.off .led-orb {
       background: radial-gradient(circle at 35% 30%, #475569 0%, #1e293b 60%, #0f172a 100%);
       border: 3px solid #334155;
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5), inset 0 -4px 8px rgba(0, 0, 0, 0.8);
-      color: #64748b;
     }
     .led-item.off .led-item-status { color: #64748b; }
 
@@ -689,8 +709,8 @@
       .top-panel { grid-template-columns: 1fr; }
       .clock-box { text-align: center; min-width: auto; }
       .clock-sub { justify-content: center; }
-      .led-container-3d { gap: 12px 6px; }
-      .led-orb { width: 60px; height: 60px; font-size: 1.3rem; }
+      .led-container-3d { gap: 16px 8px; }
+      .led-orb { width: 60px; height: 60px; }
       .section-header { flex-direction: column; align-items: flex-start; gap: 4px; }
       .footer-stats { font-size: 0.65rem; gap: 10px; }
     }
@@ -761,33 +781,38 @@
 
       <div class="led-container-3d">
         <div class="led-item red" id="ledItem1">
-          <div class="led-orb" id="ledIcon1">🔴</div>
+          <div class="led-orb" id="ledIcon1"></div>
           <div class="led-item-label">LUZ 1</div>
           <div class="led-item-status" id="led1Status">PENDIENTE</div>
+          <div class="led-item-countdown" id="led1Countdown">--:--:--</div>
         </div>
 
         <div class="led-item red" id="ledItem2">
-          <div class="led-orb" id="ledIcon2">🔴</div>
+          <div class="led-orb" id="ledIcon2"></div>
           <div class="led-item-label">LUZ 2</div>
           <div class="led-item-status" id="led2Status">PENDIENTE</div>
+          <div class="led-item-countdown" id="led2Countdown">--:--:--</div>
         </div>
 
         <div class="led-item red" id="ledItem3">
-          <div class="led-orb" id="ledIcon3">🔴</div>
+          <div class="led-orb" id="ledIcon3"></div>
           <div class="led-item-label">LUZ 3</div>
           <div class="led-item-status" id="led3Status">PENDIENTE</div>
+          <div class="led-item-countdown" id="led3Countdown">--:--:--</div>
         </div>
 
         <div class="led-item red" id="ledItem4">
-          <div class="led-orb" id="ledIcon4">🔴</div>
+          <div class="led-orb" id="ledIcon4"></div>
           <div class="led-item-label">LUZ 4</div>
           <div class="led-item-status" id="led4Status">PENDIENTE</div>
+          <div class="led-item-countdown" id="led4Countdown">--:--:--</div>
         </div>
 
         <div class="led-item red" id="ledItem5">
-          <div class="led-orb" id="ledIcon5">🔴</div>
+          <div class="led-orb" id="ledIcon5"></div>
           <div class="led-item-label">LUZ 5</div>
           <div class="led-item-status" id="led5Status">PENDIENTE</div>
+          <div class="led-item-countdown" id="led5Countdown">--:--:--</div>
         </div>
       </div>
     </div>
@@ -868,18 +893,17 @@
     const NUM_LEDS = 5;
     const PREP_STEP = PREP_DURATION / NUM_LEDS;     // 24 min por luz en Fase Roja
     const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; // 12 min por luz en Fase Verde
-
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
-    // Variables de temporización
     let adminCustomOffset = parseInt(localStorage.getItem('hangar_sc_offset_v6') || '0');
     let fetchedClockOffset = 0; 
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
     let audioEnabled = localStorage.getItem('hangar_sc_audio') === 'true';
-
-    let lastPrepGreenCount = -1;
     let currentPhase = ''; 
+
+    // Almacenamiento para detectar cambios de estado individuales y disparar efecto sirena
+    let prevLightStates = {};
 
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('sync')) {
@@ -901,7 +925,6 @@
     const scheduleGrid = document.getElementById('scheduleGrid');
     const audioToggleBtn = document.getElementById('audioToggleBtn');
 
-    /* --- SINCRONIZACIÓN SILENCIOSA Y ROBUSTA CON SERVIDORES REDUNDANTES --- */
     async function syncTrueTime() {
       const endpoints = [
         'https://worldtimeapi.org/api/timezone/Etc/UTC',
@@ -927,9 +950,7 @@
             updateHangarState();
             return;
           }
-        } catch (e) {
-          // Intenta siguiente endpoint silenciosamente
-        }
+        } catch (e) {}
       }
     }
 
@@ -1027,14 +1048,13 @@
 
     updateAudioButtonUI();
 
-    /* --- BUCLE PRINCIPAL --- */
+    /* --- BUCLE PRINCIPAL Y GESTIÓN DE ESTADOS DE LUCES --- */
     function updateHangarState() {
       const trueNow = Date.now() + fetchedClockOffset;
       const nowAdjusted = trueNow + adminCustomOffset;
       const cycleElapsed = nowAdjusted % TOTAL_CYCLE;
 
       if (cycleElapsed < PREP_DURATION) {
-        // --- FASE ROJA (120 MINUTOS) ---
         const timeLeft = PREP_DURATION - cycleElapsed;
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((cycleElapsed / PREP_DURATION) * 100);
@@ -1060,23 +1080,14 @@
         progressBarFill.style.width = `${percent}%`;
         progressBarFill.style.background = 'var(--red-main)';
 
-        updateLedsForPrep(greenCount);
-
-        if (lastPrepGreenCount !== -1 && greenCount > lastPrepGreenCount && greenCount > 0) {
-          playSound('light');
-          speakText(`Luz ${greenCount} cargada en verde`);
-        }
-        lastPrepGreenCount = greenCount;
+        updateLedsDetailed(cycleElapsed);
         currentPhase = 'PREP';
 
       } else if (cycleElapsed < PREP_DURATION + ACTIVE_DURATION) {
-        // --- FASE VERDE (60 MINUTOS) ---
         if (currentPhase !== 'ACTIVE' && currentPhase !== '') {
           playSound('open');
           speakText('Apertura de hangar iniciada. Acceso concedido.');
         }
-
-        lastPrepGreenCount = -1;
 
         const activeElapsed = cycleElapsed - PREP_DURATION;
         const timeLeft = ACTIVE_DURATION - activeElapsed;
@@ -1104,17 +1115,14 @@
         progressBarFill.style.width = `${percent}%`;
         progressBarFill.style.background = 'var(--green-main)';
 
-        updateLedsForActive(offCount);
+        updateLedsDetailed(cycleElapsed);
         currentPhase = 'ACTIVE';
 
       } else {
-        // --- PERÍODO DE GRACIA (5 MINUTOS) ---
         if (currentPhase !== 'HAZARD' && currentPhase !== '') {
           playSound('hazard');
           speakText('Atención. Tiempo agotado. Evacuar hangar.');
         }
-
-        lastPrepGreenCount = -1;
 
         const hazardElapsed = cycleElapsed - (PREP_DURATION + ACTIVE_DURATION);
         const timeLeft = HAZARD_DURATION - hazardElapsed;
@@ -1138,59 +1146,117 @@
         progressBarFill.style.width = `${percent}%`;
         progressBarFill.style.background = 'var(--hazard-main)';
 
-        updateLedsForHazard();
+        updateLedsDetailed(cycleElapsed);
         currentPhase = 'HAZARD';
       }
 
       updateSchedule(trueNow, cycleElapsed);
     }
 
-    function updateLedsForPrep(greenCount) {
+    /* --- CÁLCULO INDIVIDUAL DE CADA LUZ Y ESTADO --- */
+    function updateLedsDetailed(cycleElapsed) {
       for (let i = 1; i <= NUM_LEDS; i++) {
         const item = document.getElementById(`ledItem${i}`);
-        const icon = document.getElementById(`ledIcon${i}`);
-        const status = document.getElementById(`led${i}Status`);
+        const statusEl = document.getElementById(`led${i}Status`);
+        const countdownEl = document.getElementById(`led${i}Countdown`);
+        const orbEl = item.querySelector('.led-orb');
 
-        if (i <= greenCount) {
+        const calc = getLightData(i, cycleElapsed);
+
+        // Disparar efecto momentáneo de sirena si el estado cambia
+        if (prevLightStates[i] && prevLightStates[i] !== calc.state) {
+          triggerStateTransitionFlash(orbEl);
+          if (calc.state === 'GREEN' || calc.state === 'OFF') {
+            playSound('light');
+          }
+        }
+        prevLightStates[i] = calc.state;
+
+        // Asignar clases y textos según estado correspondiente
+        if (calc.state === 'GREEN') {
           item.className = 'led-item green';
-          icon.textContent = '🟢';
-          status.textContent = 'LISTO';
-        } else {
+          statusEl.textContent = 'ACTIVO';
+        } else if (calc.state === 'PENDING') {
           item.className = 'led-item red';
-          icon.textContent = '🔴';
-          status.textContent = 'PENDIENTE';
-        }
-      }
-    }
-
-    function updateLedsForActive(offCount) {
-      for (let i = 1; i <= NUM_LEDS; i++) {
-        const item = document.getElementById(`ledItem${i}`);
-        const icon = document.getElementById(`ledIcon${i}`);
-        const status = document.getElementById(`led${i}Status`);
-
-        if (i <= offCount) {
+          statusEl.textContent = 'PENDIENTE';
+        } else if (calc.state === 'OFF') {
           item.className = 'led-item off';
-          icon.textContent = '⚫';
-          status.textContent = 'CONSUMIDO';
-        } else {
-          item.className = 'led-item green';
-          icon.textContent = '🟢';
-          status.textContent = 'ACTIVO';
+          statusEl.textContent = 'CONSUMIDO';
+        } else if (calc.state === 'HAZARD') {
+          item.className = 'led-item hazard';
+          statusEl.textContent = 'PELIGRO';
         }
+
+        countdownEl.textContent = formatHHMMSS(calc.timeToNext);
       }
     }
 
-    function updateLedsForHazard() {
-      for (let i = 1; i <= NUM_LEDS; i++) {
-        const item = document.getElementById(`ledItem${i}`);
-        const icon = document.getElementById(`ledIcon${i}`);
-        const status = document.getElementById(`led${i}Status`);
+    function getLightData(i, cycleElapsed) {
+      // Definición de hitos en el ciclo de 185 min para cada luz
+      const prepTurnGreenTime = (i - 1) * PREP_STEP;
+      const activeTurnOffTime = PREP_DURATION + (i - 1) * ACTIVE_STEP;
+      const hazardStartTime = PREP_DURATION + ACTIVE_DURATION;
+      const cycleEnd = TOTAL_CYCLE;
 
-        item.className = 'led-item hazard';
-        icon.textContent = ''; // Limpio de símbolos feos, actúa como baliza luminosa pura
-        status.textContent = 'PELIGRO';
+      let state = 'PENDING';
+      let nextMilestone = prepTurnGreenTime;
+
+      if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < activeTurnOffTime) {
+        state = (cycleElapsed < PREP_DURATION) ? 'GREEN' : 'GREEN';
+        if (cycleElapsed < PREP_DURATION) {
+          nextMilestone = PREP_DURATION; // Se queda verde hasta que termine la fase roja
+        } else {
+          nextMilestone = activeTurnOffTime; // En fase verde, su siguiente hito es apagarse
+        }
       }
+
+      if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) {
+        state = 'GREEN';
+        nextMilestone = activeTurnOffTime;
+      } else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) {
+        state = 'OFF';
+        nextMilestone = hazardStartTime;
+      } else if (cycleElapsed >= hazardStartTime && cycleElapsed < cycleEnd) {
+        state = 'HAZARD';
+        nextMilestone = cycleEnd;
+      } else if (cycleElapsed < prepTurnGreenTime) {
+        state = 'PENDING';
+        nextMilestone = prepTurnGreenTime;
+      } else {
+        // Por defecto si está en el tramo final de prep antes de la fase verde
+        state = 'GREEN';
+        nextMilestone = PREP_DURATION;
+      }
+
+      // Ajustes finos de cronograma para cada luz individual
+      if (cycleElapsed < prepTurnGreenTime) {
+        state = 'PENDING';
+        nextMilestone = prepTurnGreenTime;
+      } else if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) {
+        state = 'GREEN';
+        nextMilestone = PREP_DURATION; // Esperando a que termine el prep global
+      } else if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) {
+        state = 'GREEN';
+        nextMilestone = activeTurnOffTime; // Esperando su turno de apagado
+      } else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) {
+        state = 'OFF';
+        nextMilestone = hazardStartTime; // Esperando al inicio de peligro
+      } else if (cycleElapsed >= hazardStartTime) {
+        state = 'HAZARD';
+        nextMilestone = cycleEnd; // Esperando al reinicio del ciclo
+      }
+
+      let timeToNext = nextMilestone - cycleElapsed;
+      if (timeToNext <= 0) timeToNext = 1000;
+
+      return { state, timeToNext };
+    }
+
+    function triggerStateTransitionFlash(orbElement) {
+      orbElement.classList.add('state-transition');
+      setTimeout(() => {
+        orbElement.classList.remove('state-transition');
+      }, 1600);
     }
 
     function updateSchedule(trueNow, cycleElapsed) {
