@@ -499,7 +499,7 @@
       gap: 6px;
     }
 
-    /* BOTONERA Y CONTROLES */
+    /* BOTONERA Y CONTROLES DISIMULADOS */
     .toolbar {
       display: flex;
       justify-content: space-between;
@@ -529,12 +529,6 @@
       transform: translateY(-1px);
     }
 
-    .btn-share {
-      background: #0284c7;
-      border-color: #0284c7;
-      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
-    }
-
     .btn-audio {
       background: rgba(15, 23, 42, 0.8);
       border-color: rgba(148, 163, 184, 0.3);
@@ -548,10 +542,22 @@
       box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
     }
 
-    .btn-admin {
-      background: rgba(245, 158, 11, 0.15);
-      border-color: var(--hazard-main);
-      color: var(--hazard-main);
+    /* BOTÓN ADMIN DISIMULADO (ESTILO STEALTH) */
+    .btn-stealth {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      color: rgba(148, 163, 184, 0.25);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-stealth:hover {
+      color: var(--text-secondary);
+      border-color: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.02);
     }
 
     .admin-panel {
@@ -779,11 +785,10 @@
       </div>
     </div>
 
-    <!-- BOTONERA DE ACCIÓN Y CONTROLES DE ALERTAS -->
+    <!-- BOTONERA CON ACCESO ADMIN DISIMULADO -->
     <div class="toolbar">
-      <button class="btn btn-share" id="shareBtn">🔗 Copiar Enlace para la Org</button>
       <button class="btn btn-audio" id="audioToggleBtn">🔕 Alertas: OFF</button>
-      <button class="btn btn-admin" id="toggleAdminBtn">🔑 Acceso Admin</button>
+      <button class="btn-stealth" id="toggleAdminBtn" title="Configuración de Sistema">⚙</button>
     </div>
 
     <!-- PANEL EXCLUSIVO ADMIN -->
@@ -1240,7 +1245,6 @@
 
     if (isAdminUnlocked) {
       adminPanel.classList.add('active');
-      toggleAdminBtn.textContent = '🔒 Cerrar Panel Admin';
     }
 
     toggleAdminBtn.addEventListener('click', () => {
@@ -1250,7 +1254,6 @@
           isAdminUnlocked = true;
           localStorage.setItem('hangar_sc_admin', 'true');
           adminPanel.classList.add('active');
-          toggleAdminBtn.textContent = '🔒 Cerrar Panel Admin';
         } else if (pass !== null) {
           alert("Clave incorrecta.");
         }
@@ -1258,14 +1261,7 @@
         isAdminUnlocked = false;
         localStorage.setItem('hangar_sc_admin', 'false');
         adminPanel.classList.remove('active');
-        toggleAdminBtn.textContent = '🔑 Acceso Admin';
       }
-    });
-
-    document.getElementById('shareBtn').addEventListener('click', () => {
-      const cleanUrl = `${window.location.origin}${window.location.pathname}?sync=${adminCustomOffset}`;
-      navigator.clipboard.writeText(cleanUrl);
-      alert(`¡Enlace copiado!\n\nComparte esta URL para sincronizar a tus compañeros:\n\n${cleanUrl}`);
     });
 
     document.getElementById('manualSyncBtn').addEventListener('click', () => {
@@ -1312,7 +1308,6 @@
       const key = 'hangar_sc_visits_count';
       let currentVisits = parseInt(localStorage.getItem(key) || '128');
       
-      // Incrementa una visita por sesión
       if (!sessionStorage.getItem('visited')) {
         currentVisits += 1;
         localStorage.setItem(key, currentVisits);
@@ -1329,7 +1324,6 @@
       onlineEl.textContent = base + variation;
     }
 
-    // Inicialización de funciones
     setInterval(updateHangarState, 1000);
     syncTrueTime();
     initStatsCounter();
