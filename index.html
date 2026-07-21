@@ -8,37 +8,31 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
   
+  <!-- Firebase SDK para Sincronización en Tiempo Real -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
   <style>
     :root {
       --bg-dark: #050811;
       --card-bg: rgba(11, 18, 32, 0.85);
       --card-border: rgba(56, 189, 248, 0.15);
-      
       --green-main: #10b981;
       --green-glow: rgba(16, 185, 129, 0.5);
       --green-bg: rgba(16, 185, 129, 0.05);
-      
       --red-main: #ef4444;
       --red-glow: rgba(239, 68, 68, 0.5);
       --red-bg: rgba(239, 68, 68, 0.05);
-
       --hazard-main: #f59e0b;
       --hazard-glow: rgba(245, 158, 11, 0.5);
       --hazard-bg: rgba(245, 158, 11, 0.08);
-
       --cyan-hud: #06b6d4;
       --cyan-glow: rgba(6, 182, 212, 0.4);
-
       --text-primary: #f8fafc;
       --text-secondary: #94a3b8;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 
     body {
       background-color: var(--bg-dark);
@@ -57,15 +51,8 @@
       background-size: 100% 100%, 40px 40px, 40px 40px;
     }
 
-    .container {
-      width: 100%;
-      max-width: 1050px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    .container { width: 100%; max-width: 1050px; display: flex; flex-direction: column; gap: 20px; }
 
-    /* ENCABEZADO TÁCTICO SLIM */
     .header-tactical {
       background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(7, 12, 24, 0.98) 100%);
       border: 1px solid var(--card-border);
@@ -79,12 +66,7 @@
       gap: 15px;
     }
 
-    .header-left {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
+    .header-left { display: flex; flex-direction: column; gap: 4px; }
     .sys-badge {
       display: inline-flex;
       align-items: center;
@@ -95,10 +77,8 @@
       letter-spacing: 1.5px;
       font-weight: 700;
     }
-
     .pulse-dot {
-      width: 6px;
-      height: 6px;
+      width: 6px; height: 6px;
       background-color: var(--cyan-hud);
       border-radius: 50%;
       box-shadow: 0 0 8px var(--cyan-hud);
@@ -114,21 +94,9 @@
       text-transform: uppercase;
       line-height: 1.1;
     }
+    .tactical-subtitle { font-size: 0.78rem; color: var(--text-secondary); letter-spacing: 0.8px; font-weight: 600; }
 
-    .tactical-subtitle {
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      letter-spacing: 0.8px;
-      font-weight: 600;
-    }
-
-    .header-right {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-    }
-
+    .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
     .org-tag {
       background: rgba(245, 158, 11, 0.12);
       border: 1px solid var(--hazard-main);
@@ -140,7 +108,6 @@
       border-radius: 4px;
       letter-spacing: 2px;
     }
-
     .author-tag {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.62rem;
@@ -149,12 +116,8 @@
       letter-spacing: 1px;
       text-transform: uppercase;
     }
+    .author-tag span { color: rgba(248, 250, 252, 0.8); }
 
-    .author-tag span {
-      color: rgba(248, 250, 252, 0.8);
-    }
-
-    /* CARDS */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -164,79 +127,23 @@
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
     }
 
-    .top-panel {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 24px;
-      align-items: center;
-    }
+    .top-panel { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; }
 
-    /* FASES */
-    .status-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    .status-group { display: flex; flex-direction: column; gap: 10px; }
+    .phase-badge { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-radius: 10px; transition: all 0.3s ease; }
+    .phase-badge.prep { background: var(--red-bg); border: 1px solid var(--red-main); box-shadow: 0 0 20px var(--red-glow); }
+    .phase-badge.active { background: var(--green-bg); border: 1px solid var(--green-main); box-shadow: 0 0 20px var(--green-glow); }
+    .phase-badge.hazard { background: var(--hazard-bg); border: 1px solid var(--hazard-main); box-shadow: 0 0 25px var(--hazard-glow); }
 
-    .phase-badge {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 20px;
-      border-radius: 10px;
-      transition: all 0.3s ease;
-    }
-
-    .phase-badge.prep {
-      background: var(--red-bg);
-      border: 1px solid var(--red-main);
-      box-shadow: 0 0 20px var(--red-glow);
-    }
-
-    .phase-badge.active {
-      background: var(--green-bg);
-      border: 1px solid var(--green-main);
-      box-shadow: 0 0 20px var(--green-glow);
-    }
-
-    .phase-badge.hazard {
-      background: var(--hazard-bg);
-      border: 1px solid var(--hazard-main);
-      box-shadow: 0 0 25px var(--hazard-glow);
-    }
-
-    .phase-indicator-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
+    .phase-indicator-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
     .phase-badge.prep .phase-indicator-dot { background: var(--red-main); box-shadow: 0 0 12px var(--red-main); }
     .phase-badge.active .phase-indicator-dot { background: var(--green-main); box-shadow: 0 0 12px var(--green-main); }
     .phase-badge.hazard .phase-indicator-dot { background: var(--hazard-main); box-shadow: 0 0 12px var(--hazard-main); }
 
-    .phase-text h2 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.15rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
+    .phase-text h2 { font-family: 'Orbitron', sans-serif; font-size: 1.15rem; font-weight: 800; letter-spacing: 1px; }
+    .phase-text p { font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px; }
+    .next-phase-text { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; padding-left: 4px; }
 
-    .phase-text p {
-      font-size: 0.82rem;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
-
-    .next-phase-text {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      font-weight: 600;
-      padding-left: 4px;
-    }
-
-    /* RELOJ REGRESIVO */
     .clock-box {
       background: rgba(3, 7, 18, 0.95);
       border: 2px solid var(--red-main);
@@ -246,25 +153,10 @@
       box-shadow: 0 0 25px var(--red-glow);
       min-width: 290px;
     }
+    .clock-box.active-mode { border-color: var(--green-main); box-shadow: 0 0 25px var(--green-glow); }
+    .clock-box.hazard-mode { border-color: var(--hazard-main); box-shadow: 0 0 30px var(--hazard-glow); }
 
-    .clock-box.active-mode {
-      border-color: var(--green-main);
-      box-shadow: 0 0 25px var(--green-glow);
-    }
-
-    .clock-box.hazard-mode {
-      border-color: var(--hazard-main);
-      box-shadow: 0 0 30px var(--hazard-glow);
-    }
-
-    .clock-label {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.68rem;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      color: var(--text-secondary);
-    }
-
+    .clock-label { font-family: 'Orbitron', sans-serif; font-size: 0.68rem; font-weight: 800; letter-spacing: 1.5px; color: var(--text-secondary); }
     .clock-digits {
       font-family: 'JetBrains Mono', monospace;
       font-size: 2.9rem;
@@ -274,474 +166,114 @@
       line-height: 1;
       margin: 4px 0;
     }
-
     .clock-box.active-mode .clock-digits { color: var(--green-main); text-shadow: 0 0 20px var(--green-glow); }
     .clock-box.hazard-mode .clock-digits { color: var(--hazard-main); text-shadow: 0 0 25px var(--hazard-glow); }
 
-    .clock-sub {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      font-weight: 600;
-    }
+    .clock-sub { display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
+    .target-time-badge { background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px; color: #fff; font-family: 'JetBrains Mono', monospace; }
 
-    .target-time-badge {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 2px 8px;
-      border-radius: 4px;
-      color: #fff;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    /* BARRA PROGRESO */
     .progress-container { margin-top: 18px; }
-    .progress-info {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-    .progress-bar-bg {
-      width: 100%; height: 7px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .progress-bar-fill {
-      height: 100%; width: 0%;
-      background: var(--red-main);
-      transition: width 1s linear;
-    }
+    .progress-info { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
+    .progress-bar-bg { width: 100%; height: 7px; background: rgba(255, 255, 255, 0.06); border-radius: 10px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background: var(--red-main); transition: width 1s linear; }
 
-    /* PANEL DE INDICADORES EN 3D (5 LUCES) */
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 12px;
-    }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; }
+    .section-title { font-family: 'Orbitron', sans-serif; font-size: 0.95rem; font-weight: 800; letter-spacing: 1.2px; }
+    .section-subtitle { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
 
-    .section-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 800;
-      letter-spacing: 1.2px;
-    }
-
-    .section-subtitle {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      font-weight: 600;
-    }
-
-    .led-container-3d { 
-      display: flex; 
-      justify-content: space-around;
-      align-items: center;
-      gap: 16px;
-      padding: 10px 0;
-      flex-wrap: wrap;
-    }
-
-    .led-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-      min-width: 110px;
-    }
-
-    .led-orb {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
+    .led-container-3d { display: flex; justify-content: space-around; align-items: center; gap: 16px; padding: 10px 0; flex-wrap: wrap; }
+    .led-item { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 110px; }
+    .led-orb { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
     .led-orb::before {
-      content: '';
-      position: absolute;
-      top: 7%;
-      left: 18%;
-      width: 64%;
-      height: 38%;
-      border-radius: 50%;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 100%);
-      pointer-events: none;
+      content: ''; position: absolute; top: 7%; left: 18%; width: 64%; height: 38%; border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 100%); pointer-events: none;
     }
-
-    .led-item-label {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.75rem;
-      font-weight: 800;
-      color: var(--text-secondary);
-      letter-spacing: 1px;
-    }
-
-    .led-item-status {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-    }
-
+    .led-item-label { font-family: 'Orbitron', sans-serif; font-size: 0.75rem; font-weight: 800; color: var(--text-secondary); letter-spacing: 1px; }
+    .led-item-status { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; }
     .led-item-countdown {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #ffffff;
-      background: rgba(3, 7, 18, 0.6);
-      padding: 3px 8px;
-      border-radius: 6px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      letter-spacing: 0.5px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; color: #ffffff;
+      background: rgba(3, 7, 18, 0.6); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    /* ESTADOS DE LAS LUCES */
-    .led-item.green .led-orb {
-      background: radial-gradient(circle at 35% 30%, #6ee7b7 0%, #10b981 50%, #047857 100%);
-      border: 3px solid #34d399;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(0, 60, 30, 0.7), 0 0 25px rgba(16, 185, 129, 0.65);
-    }
+    .led-item.green .led-orb { background: radial-gradient(circle at 35% 30%, #6ee7b7 0%, #10b981 50%, #047857 100%); border: 3px solid #34d399; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(0,60,30,0.7), 0 0 25px rgba(16,185,129,0.65); }
     .led-item.green .led-item-status { color: var(--green-main); }
 
-    .led-item.red .led-orb {
-      background: radial-gradient(circle at 35% 30%, #fca5a5 0%, #ef4444 50%, #b91c1c 100%);
-      border: 3px solid #f87171;
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(60, 0, 0, 0.7), 0 0 25px rgba(239, 68, 68, 0.65);
-    }
+    .led-item.red .led-orb { background: radial-gradient(circle at 35% 30%, #fca5a5 0%, #ef4444 50%, #b91c1c 100%); border: 3px solid #f87171; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(60,0,0,0.7), 0 0 25px rgba(239,68,68,0.65); }
     .led-item.red .led-item-status { color: var(--red-main); }
 
     @keyframes siren-flash {
-      0% {
-        background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
-        border: 3px solid #fbbf24;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(60, 40, 0, 0.7), 0 0 15px rgba(245, 158, 11, 0.3);
-        transform: scale(0.98);
-      }
-      50% {
-        background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f59e0b 40%, #92400e 100%);
-        border: 3px solid #fef08a;
-        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), inset 0 -6px 10px rgba(120, 60, 0, 0.7), 0 0 45px rgba(245, 158, 11, 0.95);
-        transform: scale(1.06);
-      }
-      100% {
-        background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%);
-        border: 3px solid #fbbf24;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6), inset 0 -6px 10px rgba(60, 40, 0, 0.7), 0 0 15px rgba(245, 158, 11, 0.3);
-        transform: scale(0.98);
-      }
+      0% { background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%); border: 3px solid #fbbf24; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(60,40,0,0.7), 0 0 15px rgba(245,158,11,0.3); transform: scale(0.98); }
+      50% { background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f59e0b 40%, #92400e 100%); border: 3px solid #fef08a; box-shadow: 0 10px 35px rgba(0,0,0,0.5), inset 0 -6px 10px rgba(120,60,0,0.7), 0 0 45px rgba(245,158,11,0.95); transform: scale(1.06); }
+      100% { background: radial-gradient(circle at 35% 30%, #fde68a 0%, #f59e0b 50%, #b45309 100%); border: 3px solid #fbbf24; box-shadow: 0 10px 20px rgba(0,0,0,0.6), inset 0 -6px 10px rgba(60,40,0,0.7), 0 0 15px rgba(245,158,11,0.3); transform: scale(0.98); }
     }
-
-    .led-item.hazard .led-orb {
-      animation: siren-flash 0.6s infinite ease-in-out;
-    }
+    .led-item.hazard .led-orb { animation: siren-flash 0.6s infinite ease-in-out; }
     .led-item.hazard .led-item-status { color: var(--hazard-main); }
 
-    @keyframes transition-siren {
-      0% { transform: scale(1); filter: brightness(1); }
-      25% { transform: scale(1.1); filter: brightness(1.8) hue-rotate(30deg); box-shadow: 0 0 40px #f59e0b; }
-      50% { transform: scale(0.95); filter: brightness(0.8); }
-      75% { transform: scale(1.08); filter: brightness(1.6) hue-rotate(30deg); box-shadow: 0 0 40px #f59e0b; }
-      100% { transform: scale(1); filter: brightness(1); }
-    }
-
-    .led-orb.state-transition {
-      animation: transition-siren 0.8s ease-in-out 2;
-    }
-
-    .led-item.off .led-orb {
-      background: radial-gradient(circle at 35% 30%, #475569 0%, #1e293b 60%, #0f172a 100%);
-      border: 3px solid #334155;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5), inset 0 -4px 8px rgba(0, 0, 0, 0.8);
-    }
+    .led-item.off .led-orb { background: radial-gradient(circle at 35% 30%, #475569 0%, #1e293b 60%, #0f172a 100%); border: 3px solid #334155; box-shadow: 0 6px 12px rgba(0,0,0,0.5), inset 0 -4px 8px rgba(0,0,0,0.8); }
     .led-item.off .led-item-status { color: #64748b; }
 
-    /* SCHEDULE */
-    .schedule-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 16px;
-      margin-top: 10px;
-    }
-
+    .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-top: 10px; }
     .schedule-card {
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid var(--card-border);
-      border-left: 4px solid var(--green-main);
-      border-radius: 10px;
-      padding: 16px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: all 0.25s ease;
+      background: rgba(15, 23, 42, 0.7); border: 1px solid var(--card-border); border-left: 4px solid var(--green-main);
+      border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; transition: all 0.25s ease;
     }
+    .schedule-header { display: flex; justify-content: space-between; align-items: center; }
+    .schedule-tag { font-family: 'Orbitron', sans-serif; font-size: 0.72rem; font-weight: 800; color: var(--cyan-hud); letter-spacing: 1px; }
+    .schedule-date-badge { font-size: 0.68rem; background: rgba(6, 182, 212, 0.15); color: var(--cyan-hud); padding: 2px 6px; border-radius: 4px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .schedule-window { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; }
+    .schedule-eta { font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; }
 
-    .schedule-card:hover {
-      background: rgba(15, 23, 42, 0.95);
-      border-color: rgba(16, 185, 129, 0.4);
-      transform: translateY(-2px);
-    }
-
-    .schedule-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .schedule-tag {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.72rem;
-      font-weight: 800;
-      color: var(--cyan-hud);
-      letter-spacing: 1px;
-    }
-
-    .schedule-date-badge {
-      font-size: 0.68rem;
-      background: rgba(6, 182, 212, 0.15);
-      color: var(--cyan-hud);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 700;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .schedule-window {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: #ffffff;
-      letter-spacing: 0.5px;
-    }
-
-    .schedule-eta {
-      font-size: 0.78rem;
-      color: var(--text-secondary);
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* BOTONERA Y CONTROLES DISIMULADOS */
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 4px;
-    }
-
-    .toolbar-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+    .toolbar-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
-      color: var(--text-primary);
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.82rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
+      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); color: var(--text-primary);
+      padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 8px;
     }
+    .btn:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-1px); }
+    .btn-audio { background: rgba(15, 23, 42, 0.8); border-color: rgba(148, 163, 184, 0.3); color: var(--text-secondary); }
+    .btn-audio.active { background: rgba(16, 185, 129, 0.15); border-color: var(--green-main); color: var(--green-main); box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+    .btn-stealth { background: transparent; border: 1px solid rgba(255, 255, 255, 0.04); color: rgba(148, 163, 184, 0.25); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .btn-stealth:hover { color: var(--text-secondary); border-color: rgba(255, 255, 255, 0.1); }
 
-    .btn:hover {
-      background: rgba(255, 255, 255, 0.12);
-      transform: translateY(-1px);
-    }
-
-    .btn-audio {
-      background: rgba(15, 23, 42, 0.8);
-      border-color: rgba(148, 163, 184, 0.3);
-      color: var(--text-secondary);
-    }
-
-    .btn-audio.active {
-      background: rgba(16, 185, 129, 0.15);
-      border-color: var(--green-main);
-      color: var(--green-main);
-      box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
-    }
-
-    .btn-stealth {
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.04);
-      color: rgba(148, 163, 184, 0.25);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .btn-stealth:hover {
-      color: var(--text-secondary);
-      border-color: rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .admin-panel {
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px dashed var(--hazard-main);
-      border-radius: 12px;
-      padding: 18px 22px;
-      display: none;
-    }
-
+    .admin-panel { background: rgba(15, 23, 42, 0.95); border: 1px dashed var(--hazard-main); border-radius: 12px; padding: 18px 22px; display: none; }
     .admin-panel.active { display: block; }
-
-    .admin-header {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.82rem;
-      color: var(--hazard-main);
-      margin-bottom: 12px;
-    }
-
-    .adjust-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-
-    .adjust-label {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      min-width: 110px;
-      font-weight: 700;
-    }
-
+    .admin-header { font-family: 'Orbitron', sans-serif; font-size: 0.82rem; color: var(--hazard-main); margin-bottom: 12px; }
+    .adjust-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+    .adjust-label { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-secondary); min-width: 110px; font-weight: 700; }
     .quick-adjust-group { display: flex; gap: 6px; flex-wrap: wrap; }
-
     .btn-adjust {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 5px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.78rem;
-      font-weight: 700;
-      cursor: pointer;
+      background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff;
+      padding: 6px 12px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 700; cursor: pointer;
     }
-
-    .btn-adjust:hover { background: var(--cyan-hud); color: #000; border-color: var(--cyan-hud); }
+    .btn-adjust:hover { background: var(--cyan-hud); color: #000; }
     .btn-adjust.minus { border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
-    .btn-adjust.minus:hover { background: var(--red-main); color: #fff; border-color: var(--red-main); }
+    .btn-adjust.minus:hover { background: var(--red-main); color: #fff; }
 
-    /* FOOTER ESTADÍSTICAS */
     .footer-stats {
-      margin-top: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      color: var(--text-secondary);
-      background: rgba(15, 23, 42, 0.4);
-      padding: 8px 18px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      flex-wrap: wrap;
+      margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 16px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-secondary);
+      background: rgba(15, 23, 42, 0.4); padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05); flex-wrap: wrap;
     }
-
-    .stat-pill {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .stat-label {
-      letter-spacing: 1px;
-      opacity: 0.7;
-    }
-
-    .stat-value {
-      color: var(--cyan-hud);
-      font-weight: 800;
-      letter-spacing: 0.5px;
-    }
-
-    .stat-divider {
-      color: rgba(255, 255, 255, 0.15);
-    }
-
-    .pulse-online {
-      width: 6px;
-      height: 6px;
-      background-color: var(--green-main);
-      border-radius: 50%;
-      box-shadow: 0 0 6px var(--green-main);
-      animation: pulse-glow 2s infinite;
-    }
-
-    @keyframes pulse-glow {
-      0% { opacity: 1; filter: drop-shadow(0 0 2px var(--cyan-hud)); }
-      50% { opacity: 0.3; }
-      100% { opacity: 1; filter: drop-shadow(0 0 2px var(--cyan-hud)); }
-    }
-
-    @media (max-width: 768px) {
-      .header-tactical { flex-direction: column; align-items: flex-start; gap: 10px; }
-      .header-right { align-items: flex-start; }
-      .top-panel { grid-template-columns: 1fr; }
-      .clock-box { text-align: center; min-width: auto; }
-      .clock-sub { justify-content: center; }
-      .led-container-3d { gap: 16px 8px; }
-      .led-orb { width: 60px; height: 60px; }
-      .section-header { flex-direction: column; align-items: flex-start; gap: 4px; }
-      .footer-stats { font-size: 0.65rem; gap: 10px; }
-    }
+    .stat-pill { display: flex; align-items: center; gap: 6px; }
+    .stat-value { color: var(--cyan-hud); font-weight: 800; }
+    .pulse-online { width: 6px; height: 6px; background-color: var(--green-main); border-radius: 50%; animation: pulse-glow 2s infinite; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    
-    <!-- HEADER TÁCTICO SLIM -->
     <header class="header-tactical">
       <div class="header-left">
-        <div class="sys-badge">
-          <span class="pulse-dot"></span>
-          SISTEMA TÁCTICO EXECUTIVE HANGARS · ONLINE
-        </div>
+        <div class="sys-badge"><span class="pulse-dot"></span> SISTEMA TÁCTICO EXECUTIVE HANGARS · ONLINE</div>
         <h1 class="tactical-title">MONITOR DE HANGARES EJECUTIVOS</h1>
         <div class="tactical-subtitle">Ciclo global sincronizado de 185 min (3h 05m) · 5 Indicadores Ópticos</div>
       </div>
-
       <div class="header-right">
         <div class="org-tag">ESPAÑA2942</div>
         <div class="author-tag">CREADO POR <span>ERYNDAL</span></div>
       </div>
     </header>
 
-    <!-- ESTADO PRINCIPAL Y CRONÓMETRO -->
     <div class="card">
       <div class="top-panel">
         <div class="status-group">
@@ -776,64 +308,28 @@
       </div>
     </div>
 
-    <!-- PANEL DE 5 INDICADORES EN 3D -->
     <div class="card">
       <div class="section-header">
         <h3 class="section-title">INDICADORES ÓPTICOS (5 LUCES)</h3>
         <span class="section-subtitle">Estado del panel de control frontal</span>
       </div>
-
       <div class="led-container-3d">
-        <div class="led-item red" id="ledItem1">
-          <div class="led-orb" id="ledIcon1"></div>
-          <div class="led-item-label">LUZ 1</div>
-          <div class="led-item-status" id="led1Status">PENDIENTE</div>
-          <div class="led-item-countdown" id="led1Countdown">--:--:--</div>
-        </div>
-
-        <div class="led-item red" id="ledItem2">
-          <div class="led-orb" id="ledIcon2"></div>
-          <div class="led-item-label">LUZ 2</div>
-          <div class="led-item-status" id="led2Status">PENDIENTE</div>
-          <div class="led-item-countdown" id="led2Countdown">--:--:--</div>
-        </div>
-
-        <div class="led-item red" id="ledItem3">
-          <div class="led-orb" id="ledIcon3"></div>
-          <div class="led-item-label">LUZ 3</div>
-          <div class="led-item-status" id="led3Status">PENDIENTE</div>
-          <div class="led-item-countdown" id="led3Countdown">--:--:--</div>
-        </div>
-
-        <div class="led-item red" id="ledItem4">
-          <div class="led-orb" id="ledIcon4"></div>
-          <div class="led-item-label">LUZ 4</div>
-          <div class="led-item-status" id="led4Status">PENDIENTE</div>
-          <div class="led-item-countdown" id="led4Countdown">--:--:--</div>
-        </div>
-
-        <div class="led-item red" id="ledItem5">
-          <div class="led-orb" id="ledIcon5"></div>
-          <div class="led-item-label">LUZ 5</div>
-          <div class="led-item-status" id="led5Status">PENDIENTE</div>
-          <div class="led-item-countdown" id="led5Countdown">--:--:--</div>
-        </div>
+        <div class="led-item red" id="ledItem1"><div class="led-orb" id="ledIcon1"></div><div class="led-item-label">LUZ 1</div><div class="led-item-status" id="led1Status">PENDIENTE</div><div class="led-item-countdown" id="led1Countdown">--:--:--</div></div>
+        <div class="led-item red" id="ledItem2"><div class="led-orb" id="ledIcon2"></div><div class="led-item-label">LUZ 2</div><div class="led-item-status" id="led2Status">PENDIENTE</div><div class="led-item-countdown" id="led2Countdown">--:--:--</div></div>
+        <div class="led-item red" id="ledItem3"><div class="led-orb" id="ledIcon3"></div><div class="led-item-label">LUZ 3</div><div class="led-item-status" id="led3Status">PENDIENTE</div><div class="led-item-countdown" id="led3Countdown">--:--:--</div></div>
+        <div class="led-item red" id="ledItem4"><div class="led-orb" id="ledIcon4"></div><div class="led-item-label">LUZ 4</div><div class="led-item-status" id="led4Status">PENDIENTE</div><div class="led-item-countdown" id="led4Countdown">--:--:--</div></div>
+        <div class="led-item red" id="ledItem5"><div class="led-orb" id="ledIcon5"></div><div class="led-item-label">LUZ 5</div><div class="led-item-status" id="led5Status">PENDIENTE</div><div class="led-item-countdown" id="led5Countdown">--:--:--</div></div>
       </div>
     </div>
 
-    <!-- PROGRAMACIÓN DE PRÓXIMAS APERTURAS -->
     <div class="card">
       <div class="section-header">
         <h3 class="section-title">📅 PRÓXIMAS APERTURAS (FASE VERDE)</h3>
         <span class="section-subtitle">Horarios calculados de las ventanas de 60 minutos (hora local)</span>
       </div>
-
-      <div class="schedule-grid" id="scheduleGrid">
-        <!-- Generado dinámicamente -->
-      </div>
+      <div class="schedule-grid" id="scheduleGrid"></div>
     </div>
 
-    <!-- BOTONERA CON ACCESO ADMIN DISIMULADO -->
     <div class="toolbar">
       <div class="toolbar-group">
         <button class="btn btn-audio" id="audioToggleBtn">🔕 Alertas Sonoras: OFF</button>
@@ -842,12 +338,8 @@
       <button class="btn-stealth" id="toggleAdminBtn" title="Configuración de Sistema">⚙</button>
     </div>
 
-    <!-- PANEL EXCLUSIVO ADMIN -->
     <div class="admin-panel" id="adminPanel">
-      <div class="admin-header">
-        ⚠️ PANEL DE CORRECCIÓN DE TIEMPOS (ADMINISTRADOR)
-      </div>
-
+      <div class="admin-header">⚠️ PANEL DE CORRECCIÓN DE TIEMPOS (ADMINISTRADOR EN LA NUBE)</div>
       <div class="adjust-row">
         <span class="adjust-label">⏱️ MINUTOS:</span>
         <div class="quick-adjust-group">
@@ -857,7 +349,6 @@
           <button class="btn-adjust" onclick="adjustOffset(10 * 60 * 1000)">⏭️ +10 Min</button>
         </div>
       </div>
-
       <div class="adjust-row">
         <span class="adjust-label">🎯 SEGUNDOS:</span>
         <div class="quick-adjust-group">
@@ -867,35 +358,38 @@
           <button class="btn-adjust" onclick="adjustOffset(10 * 1000)">⏩ +10s</button>
         </div>
       </div>
-
       <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
         <button class="btn" id="manualSyncBtn">🎯 Sincronización Manual Exacta</button>
         <button class="btn" id="resetBtn" style="border-color: var(--red-main); color: var(--red-main);">🔄 Restablecer Cero</button>
       </div>
     </div>
 
-    <!-- FOOTER ESTADÍSTICAS -->
     <footer class="footer-stats">
-      <div class="stat-pill">
-        <span class="stat-dot pulse-online"></span>
-        <span class="stat-label">OPERATIVOS EN LÍNEA:</span>
-        <span class="stat-value" id="onlineCount">1</span>
-      </div>
+      <div class="stat-pill"><span class="pulse-online"></span><span class="stat-label">OPERATIVOS EN LÍNEA:</span><span class="stat-value" id="onlineCount">1</span></div>
       <div class="stat-divider">|</div>
-      <div class="stat-pill">
-        <span class="stat-label">ACCESOS TOTALES:</span>
-        <span class="stat-value" id="visitsCount">---</span>
-      </div>
+      <div class="stat-pill"><span class="stat-label">ACCESOS:</span><span class="stat-value" id="visitsCount">---</span></div>
       <div class="stat-divider">|</div>
-      <div class="stat-pill">
-        <span class="stat-label">ZONA:</span>
-        <span class="stat-value" id="userTimezone">UTC</span>
-      </div>
+      <div class="stat-pill"><span class="stat-label">ZONA:</span><span class="stat-value" id="userTimezone">UTC</span></div>
     </footer>
-
   </div>
 
   <script>
+    // ==========================================
+    // CONFIGURACIÓN DE FIREBASE
+    // ==========================================
+    const firebaseConfig = {
+  apiKey: "AIzaSyAv9-oAYmG8tM24g-oVFluXFc7SIhtSfag",
+  authDomain: "hangar-ejecutivo.firebaseapp.com",
+  projectId: "hangar-ejecutivo",
+  storageBucket: "hangar-ejecutivo.firebasestorage.app",
+  messagingSenderId: "344290123510",
+  appId: "1:344290123510:web:f41fd77de0980fbdd5d6d7",
+  measurementId: "G-17ZBG6VN2R"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const dbRef = firebase.database().ref('hangar_sc_offset');
+
     const PREP_DURATION = 120 * 60 * 1000;   
     const ACTIVE_DURATION = 60 * 60 * 1000;  
     const HAZARD_DURATION = 5 * 60 * 1000;   
@@ -906,7 +400,7 @@
     const ACTIVE_STEP = ACTIVE_DURATION / NUM_LEDS; 
     const WARN_THRESHOLD = 15 * 60 * 1000;
 
-    let adminCustomOffset = parseInt(localStorage.getItem('hangar_sc_offset_v6') || '0');
+    let adminCustomOffset = 0;
     let fetchedClockOffset = 0; 
 
     let isAdminUnlocked = localStorage.getItem('hangar_sc_admin') === 'true';
@@ -932,31 +426,31 @@
     const notifToggleBtn = document.getElementById('notifToggleBtn');
     const userTimezoneEl = document.getElementById('userTimezone');
 
-    // Mostrar zona horaria local detectada
     try {
       userTimezoneEl.textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
     } catch(e) {}
 
-    async function syncTrueTime() {
-      const endpoints = [
-        'https://worldtimeapi.org/api/timezone/Etc/UTC',
-        'https://timeapi.io/api/time/current/zone?timeZone=UTC'
-      ];
+    dbRef.on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val !== null) {
+        adminCustomOffset = val;
+      } else {
+        adminCustomOffset = 0;
+      }
+      updateHangarState();
+    });
 
+    async function syncTrueTime() {
+      const endpoints = ['https://worldtimeapi.org/api/timezone/Etc/UTC', 'https://timeapi.io/api/time/current/zone?timeZone=UTC'];
       for (const url of endpoints) {
         try {
           const startTime = Date.now();
           const response = await fetch(url, { cache: 'no-cache' });
           if (!response.ok) continue;
-          
           const data = await response.json();
           const endTime = Date.now();
           const latency = (endTime - startTime) / 2;
-          
-          let serverTimeMs = 0;
-          if (data.datetime) serverTimeMs = new Date(data.datetime).getTime();
-          else if (data.dateTime) serverTimeMs = new Date(data.dateTime).getTime();
-
+          let serverTimeMs = data.datetime ? new Date(data.datetime).getTime() : (data.dateTime ? new Date(data.dateTime).getTime() : 0);
           if (serverTimeMs) {
             fetchedClockOffset = (serverTimeMs + latency) - endTime;
             updateHangarState();
@@ -966,7 +460,6 @@
       }
     }
 
-    /* GESTIÓN DE NOTIFICACIONES PUSH NATIVAS */
     function updateNotifButtonUI() {
       if (notifEnabled) {
         notifToggleBtn.className = 'btn btn-audio active';
@@ -978,26 +471,11 @@
     }
 
     async function requestDesktopNotification() {
-      if (!('Notification' in window)) {
-        alert('Este navegador no soporta notificaciones de escritorio.');
-        notifEnabled = false;
-        updateNotifButtonUI();
-        return;
-      }
-
-      if (Notification.permission === 'granted') {
-        notifEnabled = true;
-      } else if (Notification.permission !== 'denied') {
+      if (!('Notification' in window)) { notifEnabled = false; updateNotifButtonUI(); return; }
+      if (Notification.permission === 'granted') { notifEnabled = true; }
+      else if (Notification.permission !== 'denied') {
         const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          notifEnabled = true;
-        } else {
-          notifEnabled = false;
-          alert('Has denegado los permisos de notificación en el navegador.');
-        }
-      } else {
-        notifEnabled = false;
-        alert('Las notificaciones están bloqueadas en la configuración de tu navegador.');
+        notifEnabled = (permission === 'granted');
       }
       localStorage.setItem('hangar_sc_notif', notifEnabled);
       updateNotifButtonUI();
@@ -1005,29 +483,16 @@
 
     function sendDesktopNotification(title, body) {
       if (!notifEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
-      try {
-        new Notification(title, {
-          body: body,
-          icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>'
-        });
-      } catch(e) {}
+      try { new Notification(title, { body: body }); } catch(e) {}
     }
 
     notifToggleBtn.addEventListener('click', async () => {
-      if (!notifEnabled) {
-        await requestDesktopNotification();
-      } else {
-        notifEnabled = false;
-        localStorage.setItem('hangar_sc_notif', 'false');
-        updateNotifButtonUI();
-      }
+      if (!notifEnabled) await requestDesktopNotification();
+      else { notifEnabled = false; localStorage.setItem('hangar_sc_notif', 'false'); updateNotifButtonUI(); }
     });
-
     updateNotifButtonUI();
 
-    /* AUDIO API */
     let audioCtx = null;
-
     function initAudioContext() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -1037,48 +502,26 @@
       if (!audioEnabled) return;
       initAudioContext();
       if (!audioCtx) return;
-
       const now = audioCtx.currentTime;
-
       if (type === 'light') {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = 'sine';
         osc.frequency.setValueAtTime(587.33, now);
         osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
         gain.gain.setValueAtTime(0.25, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(now);
-        osc.stop(now + 0.35);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now); osc.stop(now + 0.35);
       } else if (type === 'open') {
         [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
           const osc = audioCtx.createOscillator();
           const gain = audioCtx.createGain();
-          osc.type = 'triangle';
           osc.frequency.setValueAtTime(freq, now + idx * 0.08);
           gain.gain.setValueAtTime(0.2, now + idx * 0.08);
           gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.3);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(now + idx * 0.08);
-          osc.stop(now + idx * 0.08 + 0.3);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.08); osc.stop(now + idx * 0.08 + 0.3);
         });
-      } else if (type === 'hazard') {
-        for (let i = 0; i < 3; i++) {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(850, now + i * 0.22);
-          osc.frequency.linearRampToValueAtTime(450, now + i * 0.22 + 0.16);
-          gain.gain.setValueAtTime(0.2, now + i * 0.22);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.22 + 0.18);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(now + i * 0.22);
-          osc.stop(now + i * 0.22 + 0.18);
-        }
       }
     }
 
@@ -1107,19 +550,10 @@
       audioEnabled = !audioEnabled;
       localStorage.setItem('hangar_sc_audio', audioEnabled);
       updateAudioButtonUI();
-
-      if (audioEnabled) {
-        initAudioContext();
-        playSound('light');
-        speakText('Alertas activadas');
-      } else {
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-      }
+      if (audioEnabled) { initAudioContext(); playSound('light'); speakText('Alertas activadas'); }
     });
-
     updateAudioButtonUI();
 
-    /* BUCLE PRINCIPAL Y GESTIÓN DE ESTADOS */
     function updateHangarState() {
       const trueNow = Date.now() + fetchedClockOffset;
       const nowAdjusted = trueNow + adminCustomOffset;
@@ -1129,9 +563,6 @@
         const timeLeft = PREP_DURATION - cycleElapsed;
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((cycleElapsed / PREP_DURATION) * 100);
-
-        const tabStatus = (timeLeft <= WARN_THRESHOLD) ? 'PRÓXIMO A ABRIRSE' : 'CERRADO';
-        document.title = `[${tabStatus} ${formattedTime}] · ESPAÑA2942`;
 
         phaseBadge.className = 'phase-badge prep';
         phaseTitle.textContent = (timeLeft <= WARN_THRESHOLD) ? 'PRÓXIMO A ABRIRSE' : 'FASE ROJA (CARGANDO)';
@@ -1156,8 +587,8 @@
       } else if (cycleElapsed < PREP_DURATION + ACTIVE_DURATION) {
         if (currentPhase !== 'ACTIVE' && currentPhase !== '') {
           playSound('open');
-          speakText('Apertura de hangar iniciada. Acceso concedido.');
-          sendDesktopNotification('🚀 Hangar Ejecutivo Abierto', 'El hangar se encuentra en Fase Verde. ¡Acceso concedido!');
+          speakText('Apertura de hangar iniciada.');
+          sendDesktopNotification('🚀 Hangar Abierto', '¡Acceso concedido!');
         }
 
         const activeElapsed = cycleElapsed - PREP_DURATION;
@@ -1165,13 +596,10 @@
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((activeElapsed / ACTIVE_DURATION) * 100);
 
-        const tabStatus = (timeLeft <= WARN_THRESHOLD) ? 'CIERRE INMINENTE' : 'ABIERTO';
-        document.title = `[${tabStatus} ${formattedTime}] · ESPAÑA2942`;
-
         phaseBadge.className = 'phase-badge active';
-        phaseTitle.textContent = (timeLeft <= WARN_THRESHOLD) ? 'CIERRE EN ' + formattedTime : 'FASE VERDE (ABIERTO)';
+        phaseTitle.textContent = 'FASE VERDE (ABIERTO)';
         phaseDesc.textContent = 'Hangar Abierto · Tiempo activo disponible';
-        nextPhaseText.textContent = 'Siguiente: PERÍODO DE GRACIA Y EVACUACIÓN (5 min)';
+        nextPhaseText.textContent = 'Siguiente: EVACUACIÓN (5 min)';
 
         clockBox.className = 'clock-box active-mode';
         clockLabel.textContent = 'TIEMPO HASTA CIERRE';
@@ -1181,7 +609,7 @@
 
         const nextLightOffMs = ACTIVE_STEP - (activeElapsed % ACTIVE_STEP);
         progressStepText.textContent = `Siguiente luz se apaga en: ${formatHHMMSS(nextLightOffMs)}`;
-        progressPercentText.textContent = `Tiempo Consumido: ${percent}%`;
+        progressPercentText.textContent = `Consumido: ${percent}%`;
         progressBarFill.style.width = `${percent}%`;
         progressBarFill.style.background = 'var(--green-main)';
 
@@ -1189,25 +617,18 @@
         currentPhase = 'ACTIVE';
 
       } else {
-        if (currentPhase !== 'HAZARD' && currentPhase !== '') {
-          playSound('hazard');
-          speakText('Atención. Tiempo agotado. Evacuar hangar.');
-          sendDesktopNotification('⚠️ Alerta de Evacuación', 'El hangar se va a cerrar. ¡Evacuación inmediata!');
-        }
-
         const hazardElapsed = cycleElapsed - (PREP_DURATION + ACTIVE_DURATION);
         const timeLeft = HAZARD_DURATION - hazardElapsed;
         const formattedTime = formatHHMMSS(timeLeft);
         const percent = Math.floor((hazardElapsed / HAZARD_DURATION) * 100);
 
-        document.title = `[⚠️ EVACUACIÓN ${formattedTime}] · ESPAÑA2942`;
         phaseBadge.className = 'phase-badge hazard';
         phaseTitle.textContent = 'PERÍODO DE GRACIA / GAS';
-        phaseDesc.textContent = '¡EVACUACIÓN! Cierre completo del hangar';
-        nextPhaseText.textContent = 'Siguiente: REINICIO DE CICLO ROJO (2 Horas)';
+        phaseDesc.textContent = '¡EVACUACIÓN! Cierre completo';
+        nextPhaseText.textContent = 'Siguiente: REINICIO DE CICLO';
 
         clockBox.className = 'clock-box hazard-mode';
-        clockLabel.textContent = 'BLOQUEO COMPLETO EN';
+        clockLabel.textContent = 'BLOQUEO EN';
         timerDigits.textContent = formattedTime;
         targetTimeLabel.textContent = '⚠️ Bloqueo a las';
         targetTime.textContent = getTargetWallTime(timeLeft, nowAdjusted);
@@ -1229,35 +650,12 @@
         const item = document.getElementById(`ledItem${i}`);
         const statusEl = document.getElementById(`led${i}Status`);
         const countdownEl = document.getElementById(`led${i}Countdown`);
-        const orbEl = item.querySelector('.led-orb');
-
         const calc = getLightData(i, cycleElapsed);
 
-        if (prevLightStates[i] && prevLightStates[i] !== calc.state) {
-          triggerStateTransitionFlash(orbEl);
-          
-          if (calc.state === 'GREEN') {
-            playSound('light');
-            speakText(`Aviso. Luz número ${i} se ha encendido en verde.`);
-          } else if (calc.state === 'OFF' || calc.state === 'HAZARD') {
-            playSound('light');
-          }
-        }
-        prevLightStates[i] = calc.state;
-
-        if (calc.state === 'GREEN') {
-          item.className = 'led-item green';
-          statusEl.textContent = 'ACTIVO';
-        } else if (calc.state === 'PENDING') {
-          item.className = 'led-item red';
-          statusEl.textContent = 'PENDIENTE';
-        } else if (calc.state === 'OFF') {
-          item.className = 'led-item off';
-          statusEl.textContent = 'CONSUMIDO';
-        } else if (calc.state === 'HAZARD') {
-          item.className = 'led-item hazard';
-          statusEl.textContent = 'PELIGRO';
-        }
+        if (calc.state === 'GREEN') { item.className = 'led-item green'; statusEl.textContent = 'ACTIVO'; }
+        else if (calc.state === 'PENDING') { item.className = 'led-item red'; statusEl.textContent = 'PENDIENTE'; }
+        else if (calc.state === 'OFF') { item.className = 'led-item off'; statusEl.textContent = 'CONSUMIDO'; }
+        else if (calc.state === 'HAZARD') { item.className = 'led-item hazard'; statusEl.textContent = 'PELIGRO'; }
 
         countdownEl.textContent = formatHHMMSS(calc.timeToNext);
       }
@@ -1272,43 +670,20 @@
       let state = 'PENDING';
       let nextMilestone = prepTurnGreenTime;
 
-      if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) {
-        state = 'GREEN';
-        nextMilestone = PREP_DURATION;
-      } else if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) {
-        state = 'GREEN';
-        nextMilestone = activeTurnOffTime;
-      } else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) {
-        state = 'OFF';
-        nextMilestone = hazardStartTime;
-      } else if (cycleElapsed >= hazardStartTime && cycleElapsed < cycleEnd) {
-        state = 'HAZARD';
-        nextMilestone = cycleEnd;
-      } else {
-        state = 'PENDING';
-        nextMilestone = prepTurnGreenTime;
-      }
+      if (cycleElapsed >= prepTurnGreenTime && cycleElapsed < PREP_DURATION) { state = 'GREEN'; nextMilestone = PREP_DURATION; }
+      else if (cycleElapsed >= PREP_DURATION && cycleElapsed < activeTurnOffTime) { state = 'GREEN'; nextMilestone = activeTurnOffTime; }
+      else if (cycleElapsed >= activeTurnOffTime && cycleElapsed < hazardStartTime) { state = 'OFF'; nextMilestone = hazardStartTime; }
+      else if (cycleElapsed >= hazardStartTime && cycleElapsed < cycleEnd) { state = 'HAZARD'; nextMilestone = cycleEnd; }
 
       let timeToNext = nextMilestone - cycleElapsed;
       if (timeToNext <= 0) timeToNext = 1000;
-
       return { state, timeToNext };
-    }
-
-    function triggerStateTransitionFlash(orbElement) {
-      orbElement.classList.add('state-transition');
-      setTimeout(() => {
-        orbElement.classList.remove('state-transition');
-      }, 1600);
     }
 
     function updateSchedule(trueNow, cycleElapsed) {
       const currentCycleStart = trueNow - cycleElapsed;
-      
       let firstFutureOpen = currentCycleStart + PREP_DURATION;
-      if (cycleElapsed >= PREP_DURATION) {
-        firstFutureOpen += TOTAL_CYCLE;
-      }
+      if (cycleElapsed >= PREP_DURATION) firstFutureOpen += TOTAL_CYCLE;
 
       let html = '';
       const todayDate = new Date(trueNow).getDate();
@@ -1317,27 +692,21 @@
         const openMs = firstFutureOpen + (i * TOTAL_CYCLE);
         const closeMs = openMs + ACTIVE_DURATION;
         const msUntil = openMs - trueNow;
-
         const openDate = new Date(openMs);
         const closeDate = new Date(closeMs);
 
         const openStr = openDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const closeStr = closeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
         const isTomorrow = openDate.getDate() !== todayDate;
-        const dateTag = isTomorrow 
-          ? `<span class="schedule-date-badge">MAÑANA</span>` 
-          : `<span class="schedule-date-badge" style="background:rgba(16,185,129,0.15); color:var(--green-main);">HOY</span>`;
+        const dateTag = isTomorrow ? `<span class="schedule-date-badge">MAÑANA</span>` : `<span class="schedule-date-badge" style="background:rgba(16,185,129,0.15); color:var(--green-main);">HOY</span>`;
 
         const hoursUntil = Math.floor(msUntil / (1000 * 60 * 60));
         const minsUntil = Math.floor((msUntil % (1000 * 60 * 60)) / (1000 * 60));
 
-        let tagTitle = (i === 0) ? 'PRÓXIMA APERTURA' : `APERTURA +${i + 1}`;
-
         html += `
           <div class="schedule-card">
             <div class="schedule-header">
-              <span class="schedule-tag">${tagTitle}</span>
+              <span class="schedule-tag">${i === 0 ? 'PRÓXIMA APERTURA' : `APERTURA +${i + 1}`}</span>
               ${dateTag}
             </div>
             <div class="schedule-window">${openStr} - ${closeStr}</div>
@@ -1345,35 +714,27 @@
           </div>
         `;
       }
-
       scheduleGrid.innerHTML = html;
     }
 
     function formatHHMMSS(ms) {
       const totalSec = Math.max(0, Math.floor(ms / 1000));
-      const hours = Math.floor(totalSec / 3600);
-      const mins = Math.floor((totalSec % 3600) / 60);
-      const secs = totalSec % 60;
-      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      return `${Math.floor(totalSec / 3600).toString().padStart(2, '0')}:${Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0')}:${(totalSec % 60).toString().padStart(2, '0')}`;
     }
 
     function getTargetWallTime(msRemaining, nowAdjusted) {
-      const targetDate = new Date(nowAdjusted + msRemaining);
-      return targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return new Date(nowAdjusted + msRemaining).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
     function adjustOffset(ms) {
       adminCustomOffset += ms;
-      localStorage.setItem('hangar_sc_offset_v6', adminCustomOffset);
-      updateHangarState();
+      dbRef.set(adminCustomOffset); 
     }
 
     const toggleAdminBtn = document.getElementById('toggleAdminBtn');
     const adminPanel = document.getElementById('adminPanel');
 
-    if (isAdminUnlocked) {
-      adminPanel.classList.add('active');
-    }
+    if (isAdminUnlocked) adminPanel.classList.add('active');
 
     toggleAdminBtn.addEventListener('click', () => {
       if (!isAdminUnlocked) {
@@ -1382,9 +743,7 @@
           isAdminUnlocked = true;
           localStorage.setItem('hangar_sc_admin', 'true');
           adminPanel.classList.add('active');
-        } else if (pass !== null) {
-          alert("Clave incorrecta.");
-        }
+        } else if (pass !== null) alert("Clave incorrecta.");
       } else {
         isAdminUnlocked = false;
         localStorage.setItem('hangar_sc_admin', 'false');
@@ -1395,18 +754,12 @@
     document.getElementById('manualSyncBtn').addEventListener('click', () => {
       const phaseInput = prompt("1 = FASE ROJA (120 min)\n2 = FASE VERDE (60 min)\n3 = PERÍODO GRACIA / PELIGRO (5 min)", "1");
       if (!phaseInput) return;
-
       const timeInput = prompt("Introduce el tiempo restante de la fase (HH:MM:SS):", "01:50:00");
       if (!timeInput) return;
-
       const parts = timeInput.trim().split(':');
       let totalMs = 0;
-      if (parts.length === 3) {
-        totalMs = ((parseInt(parts[0], 10) * 3600) + (parseInt(parts[1], 10) * 60) + parseInt(parts[2], 10)) * 1000;
-      } else if (parts.length === 2) {
-        totalMs = ((parseInt(parts[0], 10) * 60) + parseInt(parts[1], 10)) * 1000;
-      }
-
+      if (parts.length === 3) totalMs = ((parseInt(parts[0], 10) * 3600) + (parseInt(parts[1], 10) * 60) + parseInt(parts[2], 10)) * 1000;
+      
       if (!isNaN(totalMs) && totalMs >= 0) {
         let targetElapsed = 0;
         if (phaseInput.trim() === "1") targetElapsed = PREP_DURATION - totalMs;
@@ -1415,47 +768,19 @@
 
         const trueNow = Date.now() + fetchedClockOffset;
         const currentElapsed = trueNow % TOTAL_CYCLE;
-        adminCustomOffset = targetElapsed - currentElapsed;
-        localStorage.setItem('hangar_sc_offset_v6', adminCustomOffset);
-        updateHangarState();
-        alert("¡Sincronización manual aplicada!");
+        const newOffset = targetElapsed - currentElapsed;
+        dbRef.set(newOffset);
+        alert("¡Sincronización manual enviada a la nube!");
       }
     });
 
     document.getElementById('resetBtn').addEventListener('click', () => {
-      adminCustomOffset = 0;
-      localStorage.removeItem('hangar_sc_offset_v6');
-      window.history.replaceState({}, document.title, window.location.pathname);
-      updateHangarState();
+      dbRef.set(0);
       alert('Sincronización restablecida.');
     });
 
-    function initStatsCounter() {
-      const visitsEl = document.getElementById('visitsCount');
-      const key = 'hangar_sc_visits_count';
-      let currentVisits = parseInt(localStorage.getItem(key) || '128');
-      
-      if (!sessionStorage.getItem('visited')) {
-        currentVisits += 1;
-        localStorage.setItem(key, currentVisits);
-        sessionStorage.setItem('visited', 'true');
-      }
-      visitsEl.textContent = currentVisits.toLocaleString();
-    }
-
-    function updateOnlineUsers() {
-      const onlineEl = document.getElementById('onlineCount');
-      const hour = new Date().getHours();
-      let base = (hour >= 18 && hour <= 23) ? 5 : 2; 
-      let variation = Math.floor(Math.random() * 3);
-      onlineEl.textContent = base + variation;
-    }
-
     setInterval(updateHangarState, 1000);
     syncTrueTime();
-    initStatsCounter();
-    updateOnlineUsers();
-    setInterval(updateOnlineUsers, 30000);
   </script>
 </body>
 </html>
